@@ -92,13 +92,13 @@ public class Celestialdog : DefinedRoleTemplate, HasCitation, DefinedRole, Defin
                 skillButton.OnEffectStart = (button) =>
                 {
                     usedTeleport = false;
-                    MyPlayer.ToAUPlayer().Visible = false;
+                    MyPlayer.VanillaPlayer.Visible = false;
                     MyPlayer.GainAttribute(PlayerAttributes.Invisible, SkillDurationOption - 0.8f, false, 100,"celestialdog::invisible");
                     RpcEquip.Invoke(new ValueTuple<byte, bool>(MyPlayer.PlayerId, true));
                 };
                 skillButton.OnEffectEnd = (button) =>
                 {
-                    MyPlayer.ToAUPlayer().Visible = true;
+                    MyPlayer.VanillaPlayer.Visible = true;
                     RpcEquip.Invoke(new ValueTuple<byte, bool>(MyPlayer.PlayerId, false));
                     button.StartCoolDown();
                 };
@@ -122,7 +122,7 @@ public class Celestialdog : DefinedRoleTemplate, HasCitation, DefinedRole, Defin
                         }
                         var list = new List<UnityEngine.Vector2>();
                         cand.Do(p => list.Add(p.Position!.Value));
-                        MyPlayer.ToAUPlayer().NetTransform.RpcSnapTo(list[UnityEngine.Random.Range(0,list.Count)]);
+                        MyPlayer.VanillaPlayer.NetTransform.RpcSnapTo(list[UnityEngine.Random.Range(0,list.Count)]);
                     };
                 }
                 GameOperatorManager instance = GameOperatorManager.Instance!;
@@ -220,13 +220,13 @@ public class Celestialdog : DefinedRoleTemplate, HasCitation, DefinedRole, Defin
             {
                 spriteIndex = 0;
                 //NebulaManager.Instance.StartCoroutine(CoAppear().WrapToIl2Cpp());
-                owner.ToAUPlayer().Visible = false;
+                owner.VanillaPlayer.Visible = false;
             }
             void IGameOperator.OnReleased()
             {
                 if (Renderer) GameObject.Destroy(Renderer.gameObject);
                 Renderer = null!;
-                Owner.ToAUPlayer().Visible = true;
+                Owner.VanillaPlayer.Visible = true;
                 Owner.RemoveAttributeByTag("celestialdog::invisible");
             }
             protected override void HudUpdate(GameHudUpdateEvent ev)
@@ -238,7 +238,7 @@ public class Celestialdog : DefinedRoleTemplate, HasCitation, DefinedRole, Defin
             float updateSpriteTime;
             void OnUpdate(GameUpdateEvent ev)
             {
-                var control = Owner.ToAUPlayer();
+                var control = Owner.VanillaPlayer;
                 control.Visible = false;
                 if (control.MyPhysics.body.velocity.sqrMagnitude >= 0.05f)
                 {

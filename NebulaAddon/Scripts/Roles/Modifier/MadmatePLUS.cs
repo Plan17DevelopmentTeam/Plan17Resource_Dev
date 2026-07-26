@@ -26,6 +26,8 @@ public class MadmatePLUS : DefinedAllocatableModifierTemplate, HasCitation, Defi
     }
     public static ModifierFilter modifierFilter = NebulaAPI.Configurations.ModifierFilter("role.madmateplus.modifierFilter");
     int HasAssignmentRoutine.AssignPriority => 101;
+    Image? DefinedAssignable.IconImage => Nebula.Roles.Crewmate.Madmate.MyRole.GetRoleIcon();
+
     void HasAssignmentRoutine.TryAssign(Virial.Assignable.IRoleTable roleTable)
     {
         // 0を下回らないように、最大値の中に納まるよう値を減少させる。戻り値は余剰。

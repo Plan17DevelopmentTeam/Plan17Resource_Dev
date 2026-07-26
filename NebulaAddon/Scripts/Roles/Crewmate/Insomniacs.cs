@@ -6,8 +6,8 @@ namespace Plana.Roles.Crewmate;
 
 public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
-    private Insomniacs() : base("insomniacs", new(216,164,246), RoleCategory.CrewmateRole, PatchManager.DreamweaverAndInsomniacsTeam, [KillCoolDownOption,KillCatGetModifierOption,DeadBodyArrowOption,DreamweaverDeadToCrewmateOption,NoSleepNoWinOption]
-    ,false,true,()=> ((ISpawnable)Dreamweaver.MyRole).IsSpawnable) 
+    private Insomniacs() : base("insomniacs", new(216, 164, 246), RoleCategory.CrewmateRole, PatchManager.DreamweaverAndInsomniacsTeam, [KillCoolDownOption, KillCatGetModifierOption, DeadBodyArrowOption, DreamweaverDeadToCrewmateOption, NoSleepNoWinOption]
+    , false, true, () => ((ISpawnable)Dreamweaver.MyRole).IsSpawnable)
     {
         IConfigurationHolder? configurationHolder = base.ConfigurationHolder;
         if (configurationHolder == null)
@@ -25,7 +25,7 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
     }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player);
-    internal static FloatConfiguration KillCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.insomniacs.killCoolDown", (2.5f,60f,2.5f),30f,FloatConfigurationDecorator.Second);
+    internal static FloatConfiguration KillCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.insomniacs.killCoolDown", (2.5f, 60f, 2.5f), 30f, FloatConfigurationDecorator.Second);
     static BoolConfiguration DeadBodyArrowOption = NebulaAPI.Configurations.Configuration("options.role.insomniacs.ShowDeadBodyArrow", false);
     internal static BoolConfiguration DreamweaverDeadToCrewmateOption = NebulaAPI.Configurations.Configuration("options.role.insomniacs.OnDreamweaverDeadToCrewmate", true);
     static BoolConfiguration NoSleepNoWinOption = NebulaAPI.Configurations.Configuration("options.role.insomniacs.IfNoSleepNoWin", true);
@@ -48,10 +48,10 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
         {
             if (NoSleepNoWinOption)
             {
-                ev.IsBlocked |=!sleep;
+                ev.IsBlocked |= !sleep;
             }
         }
-        [Local,OnlyMyPlayer]
+        [Local, OnlyMyPlayer]
         void OnMurdered(PlayerMurderedEvent ev)
         {
             if (ev.Murderer.IsImpostor)
@@ -78,13 +78,13 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
                     {
                         instance.Subscribe<GameUpdateEvent>(delegate (GameUpdateEvent ev)
                         {
-                            ability.ShowArrow = !this.MyPlayer.IsDead&&!sleep;
+                            ability.ShowArrow = !this.MyPlayer.IsDead && !sleep;
                         }, this, 100);
                     }
                 }
                 skillButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Ability);
-                skillButton.Availability = (button) => deadTracker.CurrentTarget!=null&&MyPlayer.CanMove;
-                skillButton.Visibility = (button) => !MyPlayer.IsDead&&!sleep;
+                skillButton.Availability = (button) => deadTracker.CurrentTarget != null && MyPlayer.CanMove;
+                skillButton.Visibility = (button) => !MyPlayer.IsDead && !sleep;
                 skillButton.SetLabel("trytosleep");
                 skillButton.SetImage(skillImage);
                 skillButton.OnClick = (button) =>
@@ -131,7 +131,7 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
                             return;
                         }
                     }
-                    MyPlayer.AddModifier(InsomniacsModifier.MyRole,null);
+                    MyPlayer.AddModifier(InsomniacsModifier.MyRole, null);
                     TextMeshPro? text = AmongUsLLImpl.LocalPlayer.cosmetics.nameText;
                     text.StartCoroutine(AnimationEffects.CoPlayRoleNameEffect(text.transform.parent, new UnityEngine.Vector3(0f, 0.185f, -0.1f), MyRole.RoleColor.ToUnityColor(), text.gameObject.layer, 1.4285715f).WrapToIl2Cpp());
                 };
@@ -141,7 +141,7 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
                 {
                     if (ev.EndState.EndCondition == NebulaGameEnd.ImpostorWin)
                     {
-                        if (MyPlayer.TryGetModifier<InsomniacsModifier.Instance>(out var i)&&MyPlayer.TryGetModifier<DreamweaverModifier.Instance>(out var d))
+                        if (MyPlayer.TryGetModifier<InsomniacsModifier.Instance>(out var i) && MyPlayer.TryGetModifier<DreamweaverModifier.Instance>(out var d))
                         {
                             new StaticAchievementToken("insomniacs.challenge2");
                         }
@@ -200,7 +200,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         void OnCheckExtraWin(PlayerCheckExtraWinEvent ev)
         {
             List<GamePlayer> list = NebulaGameManager.Instance.AllPlayerInfo.Where((GamePlayer p) => p.Role is Dreamweaver.Instance || p.Modifiers.Any(m => m is DreamweaverModifier.Instance)).ToList();
-            if (list.Any(p=>ev.WinnersMask.Test(p)))
+            if (list.Any(p => ev.WinnersMask.Test(p)))
             {
                 ev.SetWin(true);
             }
@@ -208,7 +208,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         [OnlyMyPlayer]
         private void BlockWins(PlayerBlockWinEvent ev)
         {
-            ev.SetBlockedIf(!ev.Player.Modifiers.Any(p=>p is DreamweaverModifier.Instance))/*ev.GameEnd == NebulaGameEnd.CrewmateWin;*/;
+            ev.SetBlockedIf(!ev.Player.Modifiers.Any(p => p is DreamweaverModifier.Instance))/*ev.GameEnd == NebulaGameEnd.CrewmateWin;*/;
         }
         [Local]
         private void DecorateNameColor(PlayerDecorateNameEvent ev)
@@ -221,7 +221,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         [Local]
         void OnGameEnd(GameEndEvent ev)
         {
-            if (ev.EndState.EndCondition==NebulaGameEnd.ImpostorWin)
+            if (ev.EndState.EndCondition == NebulaGameEnd.ImpostorWin)
             {
                 new StaticAchievementToken("insomniacs.challenge1");
             }
@@ -257,7 +257,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         [OnlyMyPlayer]
         void OnCheckKill(PlayerCheckCanKillLocalEvent ev)
         {
-            if (ev.Target.Role is Dreamweaver.Instance||ev.Target.TryGetModifier<DreamweaverModifier.Instance>(out var dm))
+            if (ev.Target.Role is Dreamweaver.Instance || ev.Target.TryGetModifier<DreamweaverModifier.Instance>(out var dm))
             {
                 ev.SetAsCannotKillBasically();
             }
@@ -295,7 +295,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         void OnRemoveModifier(PlayerModifierRemoveEvent ev)
         {
             var p = tracking.FirstOrDefault(r => r.MyPlayer.PlayerId == ev.Player.PlayerId);
-            if (p != null&&ev.Modifier is DreamweaverModifier.Instance)
+            if (p != null && ev.Modifier is DreamweaverModifier.Instance)
             {
                 p.Release();
                 tracking.Remove(p);
@@ -307,13 +307,13 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
             {
                 new StaticAchievementToken("insomniacs.common1");
                 var role = MyPlayer.Role.Role;
-                if (role.Category == RoleCategory.ImpostorRole || role.IsKiller|| role.InternalName is "avenger" || role.InternalName is "knighted" || role.InternalName is "sheriff"|| role.InternalName is "knight")
+                if (role.Category == RoleCategory.ImpostorRole || role.IsKiller || role.InternalName is "avenger" || role.InternalName is "knighted" || role.InternalName is "sheriff" || role.InternalName is "knight")
                 {
                     return;
                 }
                 else
                 {
-                    ObjectTracker<GamePlayer> killTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, ObjectTrackers.KillablePredicate(MyPlayer),null, false, false);
+                    ObjectTracker<GamePlayer> killTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, ObjectTrackers.KillablePredicate(MyPlayer), null, false, false);
                     killButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Kill, null);
                     killButton.Availability = (button) => killTracker.CurrentTarget != null && MyPlayer.CanMove;
                     killButton.Visibility = (button) => !MyPlayer.IsDead;
@@ -336,7 +336,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
                         }
                         if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                     };
-                    
+
                     killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, Insomniacs.KillCoolDownOption).SetAsKillCoolTimer().Start(null);
                     killButton.StartCoolDown();
                     killButton.SetLabel("kill");
@@ -350,11 +350,11 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
                 }
                 foreach (var p in list)
                 {
-                    tracking.Add(new TrackingArrowAbility(p, 0f, new Virial.Color(233, 96, 174,255), false).Register(this));
+                    tracking.Add(new TrackingArrowAbility(p, 0f, new Virial.Color(233, 96, 174, 255), false).Register(this));
                 }
             }
         }
-        string RuntimeAssignable.OverrideRoleName(string lastRoleName, bool isShort,bool canSeeAllInfo)
+        string RuntimeAssignable.OverrideRoleName(string lastRoleName, bool isShort, bool canSeeAllInfo)
         {
             return Language.Translate("role.insomniacs.prefix").Color(MyRole.RoleColor.ToUnityColor()) + lastRoleName;
         }

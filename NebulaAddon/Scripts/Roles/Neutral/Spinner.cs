@@ -1,22 +1,12 @@
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Il2CppSystem.IO.Ports;
-using Nebula.Roles.Ghost.Neutral;
-using Plana.Core;
-using Plana.Roles.Crewmate;
-using UnityEngine.Experimental.GlobalIllumination;
-using UnityEngine.UI;
-using Color = Virial.Color;
-using IEnumerator = System.Collections.IEnumerator;
 using Image = Virial.Media.Image;
-using Vector2 = Virial.Compat.Vector2;
-using Vector3 = Virial.Compat.Vector3;
 
 namespace Plana.Roles.Neutral;
 
 public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableDocument
 {
-    public static Team RoleTeam = new Team("teams.spinner", new Virial.Color(255,129,56), TeamRevealType.OnlyMe);
-    private Spinner() : base("spinner", RoleTeam.Color, RoleCategory.NeutralRole, RoleTeam, [DrawCooldown,SpinCooldown,DrawCooldownAddratio,CanSpinMinPlayerNum,WinNeedEndOfFateNum]) 
+    public static Team RoleTeam = new Team("teams.spinner", new Virial.Color(255, 129, 56), TeamRevealType.OnlyMe);
+    private Spinner() : base("spinner", RoleTeam.Color, RoleCategory.NeutralRole, RoleTeam, [DrawCooldown, SpinCooldown, DrawCooldownAddratio, CanSpinMinPlayerNum, WinNeedEndOfFateNum])
     {
         //ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/Spinner.png")!.AsImage(115f)!;
     }
@@ -26,16 +16,17 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     static IntegerConfiguration CanSpinMinPlayerNum = NebulaAPI.Configurations.Configuration("options.role.spinner.canspinminplayernum", (2, 24), 3);
     static FloatConfiguration DrawCooldown = NebulaAPI.Configurations.Configuration("options.role.spinner.drawcooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
     static FloatConfiguration SpinCooldown = NebulaAPI.Configurations.Configuration("options.role.spinner.Spincooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
-    static FloatConfiguration DrawCooldownAddratio= NebulaAPI.Configurations.Configuration("options.role.spinner.drawcooldownaddratio", (0f,60f,2.5f),2.5f,FloatConfigurationDecorator.Second);
+    static FloatConfiguration DrawCooldownAddratio = NebulaAPI.Configurations.Configuration("options.role.spinner.drawcooldownaddratio", (0f, 60f, 2.5f), 2.5f, FloatConfigurationDecorator.Second);
     static IntegerConfiguration WinNeedEndOfFateNum = NebulaAPI.Configurations.Configuration("options.role.spinner.winneedendoffatenum", (1, 24), 4);
-    static public Spinner MyRole=new ();
+    static public Spinner MyRole = new();
     //bool IAssignableDocument.HasTips => true;
+
     [NebulaRPCHolder]
     public class Instance : RuntimeAssignableTemplate, RuntimeRole
     {
         public static readonly GameEnd SpinnerWin = NebulaAPI.Preprocessor!.CreateEnd("spinner", MyRole.RoleColor);
         DefinedRole RuntimeRole.Role => MyRole;
-        static Image? markImage=null;//暂无
+        static Image? markImage = null;//暂无
         static Image? spinImage = null;//暂无
         ModAbilityButton? drawButton, spinButton;
         List<GamePlayer> unSpinDrawedPlayers = new();
@@ -47,7 +38,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         {
             if (AmOwner)
             {
-                ObjectTracker<GamePlayer> myTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, p=>ObjectTrackers.StandardPredicate(p)&&!unSpinDrawedPlayers.Contains(p), null, false, false);
+                ObjectTracker<GamePlayer> myTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, p => ObjectTrackers.StandardPredicate(p) && !unSpinDrawedPlayers.Contains(p), null, false, false);
                 drawButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Ability, null);
                 drawButton.Availability = (button) => myTracker.CurrentTarget != null && this.MyPlayer.CanMove;
                 drawButton.Visibility = (button) => !base.MyPlayer.IsDead;
@@ -61,7 +52,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                 drawButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, DrawCooldown).SetAsAbilityTimer().Start();
                 drawButton.SetLabel("spinner.draw");
                 spinButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.SecondaryAbility, null);
-                spinButton.Availability = (button) => this.MyPlayer.CanMove&&unSpinDrawedPlayers.Count>=CanSpinMinPlayerNum;
+                spinButton.Availability = (button) => this.MyPlayer.CanMove && unSpinDrawedPlayers.Count >= CanSpinMinPlayerNum;
                 spinButton.Visibility = (button) => !base.MyPlayer.IsDead;
                 //spinButton.SetImage(spinImage);
                 spinButton.OnClick = delegate (ModAbilityButton button)
@@ -79,7 +70,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             }
         }
         [NebulaRPC]
-        void CoShowString(GamePlayer[] players,GamePlayer invoker)
+        void CoShowString(GamePlayer[] players, GamePlayer invoker)
         {
             if (invoker.Role is Spinner.Instance ins)
             {
@@ -94,17 +85,17 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         [OnlyHost]
         void OnUpdate(GameUpdateEvent ev)
         {
-            if (NebulaGameManager.Instance.AllPlayerInfo.Count(p=>p.PlayerState==EndofFate)>=WinNeedEndOfFateNum)
+            if (NebulaGameManager.Instance.AllPlayerInfo.Count(p => p.PlayerState == EndofFate) >= WinNeedEndOfFateNum)
             {
                 NebulaAPI.CurrentGame.TriggerGameEnd(SpinnerWin, GameEndReason.Situation);
             }
         }
     }
-    public class SpinString : FlexibleLifespan,IGameOperator
+    public class SpinString : FlexibleLifespan, IGameOperator
     {
         private List<GamePlayer> stringPlayers;
         Spinner.Instance instance;
-        public SpinString(List<GamePlayer> players,Spinner.Instance instance)
+        public SpinString(List<GamePlayer> players, Spinner.Instance instance)
         {
             stringPlayers = players;
             this.instance = instance;
@@ -113,10 +104,10 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         }
 
         bool initialized = false;
-        Dictionary<ValueTuple<GamePlayer,GamePlayer>,LineRenderer> Lines = new();
-        void CreateLine(GamePlayer p1,GamePlayer p2)
+        Dictionary<ValueTuple<GamePlayer, GamePlayer>, LineRenderer> Lines = new();
+        void CreateLine(GamePlayer p1, GamePlayer p2)
         {
-            var lr=UnityHelper.CreateObject<LineRenderer>($"Line_{p1.PlayerName}_{p2.PlayerName}", null, UnityEngine.Vector3.zero);
+            var lr = UnityHelper.CreateObject<LineRenderer>($"Line_{p1.PlayerName}_{p2.PlayerName}", null, UnityEngine.Vector3.zero);
             lr.material = new(NebulaAsset.MultiplyShader);
             lr.startWidth = 0.1f;
             lr.endWidth = 0.1f;
@@ -128,7 +119,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         }
         void OnFirstUpdate()
         {
-            if ((instance!=null&&instance.AmOwner||stringPlayers.Any(p=>p.AmOwner))||NebulaGameManager.Instance.CanSeeAllInfo)
+            if ((instance != null && instance.AmOwner || stringPlayers.Any(p => p.AmOwner)) || NebulaGameManager.Instance.CanSeeAllInfo)
             {
                 for (int i = 0; i < stringPlayers.Count; i++)
                 {
@@ -142,7 +133,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         }
         void OnDead(PlayerDieOrDisconnectEvent ev)
         {
-            if (Lines.Count() > 0)
+            if (Lines.Count > 0)
             {
                 if (ev.Player == instance.MyPlayer)
                 {
@@ -156,13 +147,13 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             {
                 return;
             }
-            if (Lines.Count() > 0&&ev.Player!=instance.MyPlayer)
+            if (Lines.Count > 0 && ev.Player != instance.MyPlayer)
             {
                 if (stringPlayers.Any(p => p == ev.Player))
                 {
                     if (ev is PlayerExiledEvent)
                     {
-                        stringPlayers.Except([ev.Player]).Do(p => p.ToAUPlayer().ModMarkAsExtraVictim(ev.Player.ToAUPlayer(), EndofFate, EventDetail.Kill));
+                        stringPlayers.Except([ev.Player]).Do(p => p.VanillaPlayer.ModMarkAsExtraVictim(ev.Player.VanillaPlayer, EndofFate, EventDetail.Kill));
                     }
                     else
                     {
@@ -173,7 +164,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         }
         void OnDisconnected(PlayerDisconnectEvent ev)
         {
-            if (Lines.Count()>0&&ev.Player!=instance.MyPlayer)
+            if (Lines.Count > 0 && ev.Player != instance.MyPlayer)
             {
                 var keysToRemove = new List<ValueTuple<GamePlayer, GamePlayer>>();
                 var disconnectedLines = Lines.Where(pair => pair.Key.Item1 == ev.Player || pair.Key.Item2 == ev.Player);
@@ -193,11 +184,11 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         void OnHudUpdate(GameHudUpdateEvent ev)
         {
             if (!initialized) OnFirstUpdate();
-            if (Lines.Count() <= 0)
+            if (Lines.Count <= 0)
             {
                 return;
             }
-            if (stringPlayers.Any(p=>p.IsDead))
+            if (stringPlayers.Any(p => p.IsDead))
             {
                 Release();
                 return;
@@ -215,6 +206,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             Lines.Do(pair => GameObject.Destroy(pair.Value));
             Lines.Clear();
         }
+
         void IGameOperator.OnReleased()
         {
             Inactivate();
@@ -224,7 +216,7 @@ public class Spinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 }
 public class Spined : DefinedModifierTemplate, DefinedModifier, DefinedAssignable, IRoleID, RuntimeAssignableGenerator<RuntimeModifier>, HasCitation, IAssignableDocument
 {
-    private Spined() : base("spined", new Virial.Color(255,129,56), null, true, () => false) { }
+    private Spined() : base("spined", new Virial.Color(255, 129, 56), null, true, () => false) { }
 
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
 
@@ -241,7 +233,7 @@ public class Spined : DefinedModifierTemplate, DefinedModifier, DefinedAssignabl
         [OnlyMyPlayer]
         void CheckExtraWin(PlayerCheckExtraWinEvent ev)
         {
-            if (ev.Player.PlayerState==Spinner.EndofFate&&ev.GameEnd==Spinner.Instance.SpinnerWin)
+            if (ev.Player.PlayerState == Spinner.EndofFate && ev.GameEnd == Spinner.Instance.SpinnerWin)
             {
                 ev.SetWin(true);
             }

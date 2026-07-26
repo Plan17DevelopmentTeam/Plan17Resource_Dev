@@ -408,7 +408,7 @@ public class Moran : DefinedSingleAbilityRoleTemplate<Moran.Ability>, HasCitatio
         {
             if (MyRifle != null && StoreRifleOnUsingUtilityOption)
             {
-                var p = MyPlayer.ToAUPlayer();
+                var p = MyPlayer.VanillaPlayer;
                 if (p.onLadder || p.inMovingPlat || p.inVent) RpcEquip.Invoke((MyPlayer.PlayerId, false));
             }
         }
@@ -488,7 +488,7 @@ public class Moran : DefinedSingleAbilityRoleTemplate<Moran.Ability>, HasCitatio
                     }
                     else
                     {
-                        NebulaGameManager.Instance?.GameStatistics.RpcRecordEvent(GameStatistics.EventVariation.Kill, EventDetail.Missed, MyPlayer.ToAUPlayer(), 0);
+                        NebulaGameManager.Instance?.GameStatistics.RpcRecordEvent(GameStatistics.EventVariation.Kill, EventDetail.Missed, MyPlayer.VanillaPlayer, 0);
                     }
                     Sniper.RpcShowNotice.Invoke(MyPlayer.Position);
 
@@ -746,7 +746,7 @@ public class MoranModifier : DefinedModifierTemplate, HasCitation, DefinedModifi
         {
             if (MyRifle != null && Moran.StoreRifleOnUsingUtilityOption)
             {
-                var p = MyPlayer.ToAUPlayer();
+                var p = MyPlayer.VanillaPlayer;
                 if (p.onLadder || p.inMovingPlat || p.inVent) RpcEquip.Invoke((MyPlayer.PlayerId, false));
             }
         }
@@ -839,7 +839,7 @@ public class MoranModifier : DefinedModifierTemplate, HasCitation, DefinedModifi
                     }
                     else
                     {
-                        NebulaGameManager.Instance?.GameStatistics.RpcRecordEvent(GameStatistics.EventVariation.Kill, EventDetail.Missed, MyPlayer.ToAUPlayer(), 0);
+                        NebulaGameManager.Instance?.GameStatistics.RpcRecordEvent(GameStatistics.EventVariation.Kill, EventDetail.Missed, MyPlayer.VanillaPlayer, 0);
                     }
                     Sniper.RpcShowNotice.Invoke(MyPlayer.Position);
 

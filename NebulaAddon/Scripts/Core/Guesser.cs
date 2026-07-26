@@ -68,7 +68,7 @@ public static class GuesserSystem
     {
         if (AmongUsLLImpl.LocalPlayer.Data.IsDead)
         {
-            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(message.Item1.ToAUPlayer(), Language.Translate("role.guesser.guessText").Replace("%NAME%", message.Item2.ToAUPlayer().name).Replace("%ROLE%", Nebula.Roles.Roles.GetRole(message.Item3).DisplayColoredName));
+            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(message.Item1.VanillaPlayer, Language.Translate("role.guesser.guessText").Replace("%NAME%", message.Item2.Name).Replace("%ROLE%", Nebula.Roles.Roles.GetRole(message.Item3).DisplayColoredName));
         }
     });
     public static RemoteProcess<ValueTuple<GamePlayer, GamePlayer, int>> DoomsayerGuessMessageRPC = new RemoteProcess<ValueTuple<GamePlayer, GamePlayer, int>>("DoomsayerGuessMessage", delegate
@@ -76,7 +76,7 @@ public static class GuesserSystem
     {
         if (AmongUsLLImpl.LocalPlayer.Data.IsDead)
         {
-            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(message.Item1.ToAUPlayer(), Language.Translate("role.doomsayer.guessText").Replace("%NAME%", message.Item2.ToAUPlayer().name).Replace("%ROLE%", Nebula.Roles.Roles.GetRole(message.Item3).DisplayColoredName));
+            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(message.Item1.VanillaPlayer, Language.Translate("role.doomsayer.guessText").Replace("%NAME%", message.Item2.Name).Replace("%ROLE%", Nebula.Roles.Roles.GetRole(message.Item3).DisplayColoredName));
         }
     });
     public static bool CheckGuess(GamePlayer target, DefinedRole r)
@@ -362,7 +362,7 @@ public static class GuesserSystem
     {
         if (!message.Item1.AmOwner&&!message.Item2.AmOwner)
         {
-            AmongUsLLImpl.HudManagerInstance.KillOverlay.ShowKillAnimation(message.Item2.ToAUPlayer().Data, message.Item2.ToAUPlayer().Data);
+            AmongUsLLImpl.HudManagerInstance.KillOverlay.ShowKillAnimation(message.Item2.VanillaPlayer.Data, message.Item2.VanillaPlayer.Data);
         }
     });
     public static List<GamePlayer> doomsayerGuessKillPlayers = new List<GamePlayer>();

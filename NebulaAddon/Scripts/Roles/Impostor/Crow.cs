@@ -285,7 +285,7 @@ public class Crow : DefinedRoleTemplate, DefinedRole,HasCitation,DefinedAssignab
                 ModAbilityButton tpButton = NebulaAPI.Modules.AbilityButton(this, base.MyPlayer, VirtualKeyInput.SecondaryAbility, null, teleportCooldownOption, "cteleport", tpImage, (ModAbilityButton _) => mark!=null, (button) => !MyPlayer.IsDead, false);
                 tpButton.OnClick = delegate (ModAbilityButton button)
                 {
-                    var myplayer = MyPlayer.ToAUPlayer();
+                    var myplayer = MyPlayer.VanillaPlayer;
                         myplayer.MyPhysics.ResetMoveState(true);
                     UnityEngine.Vector2 TempPosition = mark!.Position;
                         myplayer.NetTransform.SnapTo(new UnityEngine.Vector2(TempPosition.x, TempPosition.y + 0.3636f));

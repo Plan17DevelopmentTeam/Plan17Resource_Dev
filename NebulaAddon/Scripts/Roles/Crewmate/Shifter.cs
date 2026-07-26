@@ -79,13 +79,13 @@ public class Shifter : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             {
                 if (!canExecuteShift) return;
                 if (shiftTarget == null) return;
-                if (!(shiftTarget.ToAUPlayer())) return;
+                if (!(shiftTarget.VanillaPlayer)) return;
                 var player = shiftTarget;
                 if (player == null || player.IsDead) return;
                 if (player.Role.Role.Category != RoleCategory.CrewmateRole)
                 {
                     //MyPlayer.Suicide(PlayerState.Guessed, null, KillParameter.MeetingKill, null);
-                    MyPlayer.ToAUPlayer().ModMarkAsExtraVictim(null, PlayerStates.Suicide, PlayerStates.Suicide);
+                    MyPlayer.VanillaPlayer.ModMarkAsExtraVictim(null, PlayerStates.Suicide, PlayerStates.Suicide);
                     new StaticAchievementToken("shifter.another1");
                     return;
                 }

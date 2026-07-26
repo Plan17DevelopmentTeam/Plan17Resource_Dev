@@ -232,11 +232,14 @@ public class HasLove : DefinedModifierTemplate, DefinedModifier, DefinedAssignab
         {
             ev.IsBlocked = ev.GameEnd != NebulaGameEnd.CrewmateWin;
         }
+
         [OnlyMyPlayer]
+        [EventPriority(EventPriority.VeryLow)]
         private void CheckWins(PlayerCheckWinEvent ev)
         {
             ev.IsWin = ev.GameEnd == NebulaGameEnd.CrewmateWin;
         }
+
         [OnlyMyPlayer]
         void OnCheckKill(PlayerCheckCanKillLocalEvent ev)
         {

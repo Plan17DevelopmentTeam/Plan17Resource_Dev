@@ -20,7 +20,7 @@ using Virial.Game;
 using Virial.Helpers;
 using Vector2 = UnityEngine.Vector2;
 
-namespace Plana.Role.Complex;
+namespace Plana.Roles.Complex;
 public class Splicer : DefinedSingleAbilityRoleTemplate<IUsurpableAbility>, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
     private Splicer(bool isEvil) : base((isEvil ? "evil" : "nice") + "splicer", isEvil ? Palette.ImpostorRed.ToNebulaColor() : new(58, 127, 190),
@@ -316,7 +316,7 @@ public class Splicer : DefinedSingleAbilityRoleTemplate<IUsurpableAbility>, Defi
         [Local]
         private void OnPlayerMurdered(PlayerMurderedEvent ev)
         {
-            if (warpafter && !Helpers.AnyNonTriggersBetween(base.MyPlayer.ToAUPlayer().GetTruePosition(), ev.Dead.ToAUPlayer().GetTruePosition(), out var vec, null) && vec.Magnitude < 1.25f)
+            if (warpafter && !Helpers.AnyNonTriggersBetween(base.MyPlayer.VanillaPlayer.GetTruePosition(), ev.Dead.VanillaPlayer.GetTruePosition(), out var vec, null) && vec.Magnitude < 1.25f)
             {
                 new StaticAchievementToken("nicesplicer.challenge1");
             }

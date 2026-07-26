@@ -29,7 +29,7 @@ private Nocturnal(): base("nocturnal", "nct", NebulaTeams.ImpostorTeam.Color, [M
                 {
                     return;
                 }
-                if (PlayerTask.PlayerHasTaskOfType<ElectricTask>(MyPlayer.ToAUPlayer()))
+                if (PlayerTask.PlayerHasTaskOfType<ElectricTask>(MyPlayer.VanillaPlayer))
                 {
                     if (!NebulaInput.SomeUiIsActive)
                     {
@@ -73,6 +73,6 @@ private Nocturnal(): base("nocturnal", "nct", NebulaTeams.ImpostorTeam.Color, [M
         public IgnoreWallVisionAbility(GamePlayer player):base(player)
         {
         }
-        bool IPlayerAbility.EyesightIgnoreWalls => PlayerTask.PlayerHasTaskOfType<ElectricTask>(MyPlayer.ToAUPlayer());
+        bool IPlayerAbility.EyesightIgnoreWalls => PlayerTask.PlayerHasTaskOfType<ElectricTask>(MyPlayer.VanillaPlayer);
     }
 }

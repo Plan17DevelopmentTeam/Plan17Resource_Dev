@@ -11,15 +11,16 @@ public class Disperser : DefinedAllocatableModifierTemplate, DefinedAllocatableM
     private Disperser() : base("disperser", "dps", NebulaTeams.ImpostorTeam.Color, [DisperseOption],false,true,true)
     {
     }
-    public static T Random<T>(IEnumerable<T> input)
+    public static T? Random<T>(IEnumerable<T> input)
     {
         IList<T> list = (input as IList<T>) ?? input.ToList<T>();
         if (list.Count != 0)
         {
             return list[global::UnityEngine.Random.Range(0, list.Count)];
         }
-        return default(T);
+        return default;
     }
+
     public static Vector2 SendPlayerToVent(Vent vent)
     {
         Vector2 size = vent.GetComponent<BoxCollider2D>().size;

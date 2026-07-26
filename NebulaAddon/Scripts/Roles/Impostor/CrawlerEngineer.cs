@@ -3,23 +3,24 @@ using Il2CppInterop.Runtime.Injection;
 using Nebula.Map;
 using Nebula.Modules.Cosmetics;
 using Nebula.Roles.Complex;
-using Plana.Core;
 using Virial.Events.Game.Minimap;
-using Color = UnityEngine.Color;
-using Vector2 = UnityEngine.Vector2;
+using Virial.Helpers;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Plana.Roles.Impostor;
 
 public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.Ability>, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, HasCitation, IAssignableDocument
 {
-    private CrawlerEngineer() : base("crawlerengineer", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [CrawlerHasWatching,CrawlerNoCamouflager,PatchManager.ImpostorMeetingChat])
+    private CrawlerEngineer() : base("crawlerengineer", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PadVisibleTime, CrawlerHasWatching ,CrawlerNoCamouflager,PatchManager.ImpostorMeetingChat])
     {
         ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/CrawlerEngineer.png")!.AsImage(115f)!;
     }
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/CrawlerEngineer.png")!.AsImage();
+
+    static private FloatConfiguration PadVisibleTime = NebulaAPI.Configurations.Configuration("options.role.crawlerengineer.padVisibletime", (0f, 10f, 0.5f), 5f, FloatConfigurationDecorator.Second);
     static public readonly BoolConfiguration CrawlerHasWatching = NebulaAPI.Configurations.Configuration("role.crawlerengineer.haswatching", true);
     static public readonly BoolConfiguration CrawlerNoCamouflager= NebulaAPI.Configurations.Configuration("role.crawlerengineer.nocamouflager", false);
+
     Citation HasCitation.Citation => PCitations.PlanaANDKC;
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.Killers;
     MultipleAssignmentType DefinedRole.MultipleAssignment => MultipleAssignmentType.AsUniqueMapAbility;
@@ -27,12 +28,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
     {
         return new CrawlerEngineer.Ability(player, arguments.GetAsBool(0));
     }
-    public static void LoadPatch(Harmony harmony)
-    {
-        PDebug.Log("CrawlerEngineer Patch");
-        harmony.Patch(typeof(PlayerModInfo).GetMethod("AddOutfit"), new HarmonyMethod(typeof(CrawlerEngineer.Ability).GetMethod("BlockAddOutfit")));
-        PDebug.Log("Done");
-    }
+
     static public CrawlerEngineer MyRole = new CrawlerEngineer();
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasAbility => true;
@@ -51,8 +47,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
         private ModAbilityButton? skillButton = null;
         internal static Virial.Media.Image MeetingSkill = NebulaAPI.AddonAsset.GetResource("CrawlerMeetingSkill.png")!.AsImage(100f)!;
         internal static Virial.Media.Image skillImage = NebulaAPI.AddonAsset.GetResource("CrawlerUsePadSkill.png")!.AsImage(100f)!;
-        ShowPlayersMapLayer? mapCountLayer;
-        public static Dictionary<GamePlayer,RoleTeam>? RunTeamInstances=new Dictionary<GamePlayer,RoleTeam>();
+        public static Dictionary<GamePlayer,RoleTeam>? RunTeamInstances = new Dictionary<GamePlayer,RoleTeam>();
         void IGameOperator.OnReleased()
         {
             if (RunTeamInstances.ContainsKey(MyPlayer))
@@ -64,25 +59,15 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
         {
             MarkedPlayer = new Dictionary<byte, int>();
         }
-        public static bool BlockAddOutfit(GamePlayer __instance,OutfitCandidate outfit)
+
+        [Local]
+        void OnOutfitChange(PlayerOutfitChangeEvent ev)
         {
-            if (CrawlerNoCamouflager)
-            {
-                if (GamePlayer.LocalPlayer!.Role.GetAbility<CrawlerEngineer.Ability>()==null)
-                {
-                    return true;
-                }
-                if (outfit.Tag.ToLower().Contains("camo") || outfit.Tag.ToLower().Contains("commscfeffect"))
-                {
-                    if (__instance.Role.GetAbility<CrawlerEngineer.Ability>()!=null)
-                    {
-                        return true;
-                    }
-                    return false;
-                }
-            }
-            return true;
+            if (!CrawlerNoCamouflager) return;
+            if (ev.Outfit.Tag.Contains("camo", StringComparison.CurrentCultureIgnoreCase) || ev.Outfit.Tag.Contains("commscfeffect", StringComparison.CurrentCultureIgnoreCase))
+                ev.Player.RemoveOutfitByTag(ev.Outfit.Tag);
         }
+
         void UpdateNameText(PlayerDecorateNameEvent ev)
         {
             if (MyPlayer.TryGetAbility<Ability>(out var a))
@@ -145,9 +130,9 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
             {
                 return;
             }
-            if (!GamePlayer.LocalPlayer!.CanKill(MyPlayer)&& !NebulaGameManager.Instance!.CanSeeAllInfo)
+            if (!GamePlayer.LocalPlayer!.CanKill(MyPlayer) && !NebulaGameManager.Instance!.CanSeeAllInfo)
             {
-                if (!MyPlayer.CanKill(ev.Player)&&!GamePlayer.LocalPlayer.CanKill(ev.Player)&&!ev.Player.CanKill(MyPlayer)&&!ev.Player.CanKill(GamePlayer.LocalPlayer))
+                if (!MyPlayer.CanKill(ev.Player) && !GamePlayer.LocalPlayer.CanKill(ev.Player)&&!ev.Player.CanKill(MyPlayer)&&!ev.Player.CanKill(GamePlayer.LocalPlayer))
                 {
                     string text = ev.Player.Role.DisplayColoredName;
                     foreach (var modifier in ev.Player.Modifiers)
@@ -252,35 +237,9 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
             }
         }
 
-        [Local]
-        private void OnOpenMap(AbstractMapOpenEvent ev)
-        {
-            try
-            {
-                if (MyPad != null && !(ev is MapOpenAdminEvent) && !base.IsUsurped && !MeetingHud.Instance && !base.MyPlayer.IsDead)
-                {
-                    if (!mapCountLayer)
-                    {
-                        mapCountLayer = UnityHelper.CreateObject<ShowPlayersMapLayer>("CountLayer", MapBehaviour.Instance.transform, new UnityEngine.Vector3(0f, 0f, -1f), null);
-                        this.BindGameObject(mapCountLayer.gameObject);
-                        mapCountLayer.SetUp(p => true, null!, true,this);
-                    }
-                    mapCountLayer!.gameObject.SetActive(true);
-                    MapBehaviour.Instance?.ColorControl?.SetColor(new(171,0,126, 255));
-                    return;
-                }
-                if (mapCountLayer)
-                {
-                    mapCountLayer!.gameObject.SetActive(false);
-                }
-            }
-            catch (Exception e)
-            {
-                PDebug.Log(e);
-            }
-        }
         bool useMap;
         bool kill;
+
         [Local]
         void OnKill(PlayerMurderedEvent ev)
         {
@@ -308,9 +267,11 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
             {
                 useMap = false;
                 kill = false;
-                skillButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Ability);
+
+                skillButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Ability).SetLabelType(ModAbilityButton.LabelType.Impostor);
                 skillButton.Availability = (button) => MyPlayer.CanMove;
                 skillButton.Visibility = (button) => !MyPlayer.IsDead;
+                skillButton.EffectTimer = NebulaAPI.Modules.Timer(this, PadVisibleTime);
                 skillButton.SetLabel("equip");
                 skillButton.SetImage(skillImage!);
                 skillButton.OnClick = (button) =>
@@ -321,7 +282,12 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                         new StaticAchievementToken("crawlerengineer.common1");
                     }
                     button.SetLabel(MyPad == null ? "unequip" : "equip");
-                    RpcEquip.Invoke(new ValueTuple<byte, bool>(MyPlayer.PlayerId, MyPad== null));
+
+                    RpcEquip.Invoke(new ValueTuple<byte, bool>(MyPlayer.PlayerId, MyPad == null));
+                    if (MyPad != null)
+                        skillButton.StartEffect();
+                    else
+                        skillButton.InterruptEffect();
                 };
                 skillButton.OnBroken = delegate (ModAbilityButton button)
                 {
@@ -331,8 +297,8 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                         RpcEquip.Invoke(new ValueTuple<byte, bool>(base.MyPlayer.PlayerId, false));
                     }
                 };
-                skillButton.SetLabelType(ModAbilityButton.LabelType.Impostor);
-                GameOperatorManager instance = GameOperatorManager.Instance!;
+
+                GameOperatorManager instance = GameOperatorManager.Instance;
                 if (instance != null)
                 {
                     instance.Subscribe<MeetingStartEvent>(delegate (MeetingStartEvent ev)
@@ -345,7 +311,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                     }, this, 100);
                     instance.Subscribe<PlayerMurderedEvent>(ev =>
                     {
-                        if (ev.Murderer.AmOwner && ev.Player.PlayerState == PlayerState.Guessed&&useMap)
+                        if (ev.Murderer.AmOwner && ev.Player.PlayerState == PlayerState.Guessed && useMap)
                         {
                             new StaticAchievementToken("crawlerengineer.challenge1");
                         }
@@ -374,35 +340,42 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                 }
             }
         }
-        private void EquipPad()
+
+        private void EquipPad(GamePlayer player)
         {
-            MyPad = new CrawlerPad(base.MyPlayer).Register(this);
+            MyPad = new CrawlerPad(player).Register(this);
         }
 
         private void UnequipPad()
         {
-            if (MyPad!=null)
-            {
-                MyPad.UnUsePad();
-            }
+            MyPad?.UnUsePad();
             MyPad = null!;
         }
-        public CrawlerPad MyPad
-        {
-            get; private set;
-        } = null!;
+
+        public CrawlerPad MyPad { get; private set; } = null!;
+
         static readonly RemoteProcess<(byte playerId, bool equip)> RpcEquip = new(
         "EquipPad",
         (message, _) =>
         {
-            var role = GamePlayer.GetPlayer(message.playerId)?.Role;
-            var ability = role!.GetAbility<CrawlerEngineer.Ability>();
-            if (ability != null)
+            var player = GamePlayer.GetPlayer(message.playerId);
+            if (player == null) return;
+
+            if (player.TryGetAbility<CrawlerEngineer.Ability>(out var ability))
             {
+                var localPlayer = GamePlayer.LocalPlayer;
+                if (localPlayer == null) return;
+
                 if (message.equip)
-                    ability.EquipPad();
+                {
+                    ability.EquipPad(player);
+                    if (localPlayer.AmOwner && localPlayer.IsSameSideOf(player) && !localPlayer.CanKill(player) && !player.CanKill(localPlayer))
+                        new CrawlerEngineerTrackAbility(localPlayer, ability);
+                }
                 else
+                {
                     ability.UnequipPad();
+                }
             }
         }
         );
@@ -443,16 +416,37 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                 updateSpriteTime = 0f;
             }
         }
+
         System.Collections.IEnumerator CoAppear()
         {
-            animing = true;
-            for (int i = 0; i <= 1; i++)
+            if (base.Owner.AmOwner)
             {
-                Renderer.sprite = PadSprite.AsLoader(i).GetSprite();
-                yield return Effects.Wait(0.08f);
+                animing = true;
+                for (int i = 0; i <= 1; i++)
+                {
+                    Renderer.sprite = PadSprite.AsLoader(i).GetSprite();
+                    yield return Effects.Wait(0.08f);
+                }
+                animing = false;
             }
-            animing = false;
+            else
+            {
+                Renderer.sprite = PadSprite.AsLoader(1).GetSprite();
+                var tmp = Renderer.color;
+                tmp.a = 0;
+                Renderer.color = tmp;
+                yield return ManagedEffects.Wait(CrawlerEngineer.PadVisibleTime);
+
+                while (Renderer.color.a < 1)
+                {
+                    tmp.a = Mathf.Min(Renderer.color.a + (Time.deltaTime / 1f), 1f);
+                    Renderer.color = tmp;
+
+                    yield return null;
+                }
+            }
         }
+
         System.Collections.IEnumerator CoDisappear()
         {
             animing = true;
@@ -468,6 +462,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
             NebulaManager.Instance.StartCoroutine(CoDisappear().WrapToIl2Cpp());
         }
     }
+
     public class ShowPlayersMapLayer : MonoBehaviour
     {
         static ShowPlayersMapLayer()
@@ -475,14 +470,15 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
             ClassInjector.RegisterTypeInIl2Cpp<ShowPlayersMapLayer>();
         }
         bool showDead;
-        private Camera camera;
-        private PassiveButton clickButton;
-        private CircleCollider2D collider;
-        SpriteRenderer cameraDotRenderer = null!, dotRenderer = null!;
+        internal Camera camera;
+        internal PassiveButton clickButton;
+        internal CircleCollider2D collider;
+        internal SpriteRenderer cameraDotRenderer = null!, dotRenderer = null!;
         static private readonly Image whiteCircleSprite = NebulaResourceTextureLoader.FromResource("Nebula.Resources.WhiteCircle.png", 100f);
         protected float CurrentMapScale;
         protected UnityEngine.Vector2 CurrentMapCenter;
         CrawlerEngineer.Ability? role;
+
         void Awake()
         {
             collider = UnityHelper.CreateObject<CircleCollider2D>("Click", transform, new(0f, 0f, -5f));
@@ -501,19 +497,20 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                 NebulaManager.Instance.SetHelpWidget(clickButton,
                 new NoSGameObjectGUIWrapper(Virial.Media.GUIAlignment.Center, () =>
                 {
-                    var mesh = UnityHelper.CreateMeshRenderer("MeshRenderer", transform, new(0, -0.08f, -1), null);
-                    mesh.filter.CreateRectMesh(new(2f, 1.2f));
-                    mesh.renderer.sharedMaterial.mainTexture = camera.SetCameraRenderTexture(1000, 600);//200,120
-                    mesh.renderer.transform.localScale = MapBehaviourExtension.GetMinimapFlippedScale();
-                    return (mesh.renderer.gameObject, new(2f, 1.2f));
+                    var (renderer, filter) = UnityHelper.CreateMeshRenderer("MeshRenderer", transform, new(0, -0.08f, -1), null);
+                    filter.CreateRectMesh(new(2f, 1.2f));
+                    renderer.sharedMaterial.mainTexture = camera.SetCameraRenderTexture(1000, 600);//200,120
+                    renderer.transform.localScale = MapBehaviourExtension.GetMinimapFlippedScale();
+                    return (renderer.gameObject, new(2f, 1.2f));
                 }), true);
             });
             clickButton.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(clickButton));
             camera = UnityHelper.CreateRenderingCamera("ShowPlayerCamera", null, Vector3.zero, 1.75f);//1.6f
-            camera.gameObject.AddComponent<IgnoreShadowCamera>().ShowNameText=true;
+            camera.gameObject.AddComponent<IgnoreShadowCamera>().ShowNameText = true;
             camera.gameObject.AddComponent<ResetIgnoreShadowCamera>();
             cameraDotRenderer = UnityHelper.CreateObject<SpriteRenderer>("DotImage", camera.transform, new(0f, 0f, -10f), LayerExpansion.GetDefaultLayer());
             cameraDotRenderer.sprite = whiteCircleSprite.GetSprite();
+
             CurrentMapCenter = VanillaAsset.GetMapCenter(AmongUsLLImpl.Instance.MapId);
             CurrentMapScale = VanillaAsset.GetMapScale(AmongUsLLImpl.Instance.MapId);
         }
@@ -565,14 +562,16 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
         {
             OptimizeMap(role?.MyPad!=null,MapBehaviour.Instance.infectedOverlay);
         }
-        public void SetUp(Predicate<IPlayerlike> showPredicate, Action<int> postAction, bool showdead,CrawlerEngineer.Ability role)
+        public void SetUp(Predicate<IPlayerlike> showPredicate, Action<int> postAction, bool showdead, CrawlerEngineer.Ability role)
         {
             this.showPredicate = showPredicate;
             this.postShownAction = postAction;
+
             showDead = showdead;
             this.role = role;
             GameOperatorManager.Instance!.Subscribe<MapInstantiateEvent>(OnMapInstantiated, role);
         }
+
         Dictionary<byte, SpriteRenderer>? mapIcons;
         void OnEnable()
         {
@@ -619,7 +618,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                 UnityEngine.Object.Destroy(camera.gameObject);
             }
         }
-        void initializeIcons(MapBehaviour __instance, PlayerControl pc = null!)
+        void InitializeIcons(MapBehaviour __instance, PlayerControl pc = null!)
         {
             List<PlayerControl> list = new List<PlayerControl>();
             if (pc == null)
@@ -645,7 +644,7 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
         {
             if (mapIcons == null)
             {
-                initializeIcons(MapBehaviour.Instance, null!);
+                InitializeIcons(MapBehaviour.Instance, null!);
             }
             foreach (byte b in mapIcons!.Keys)
             {
@@ -654,10 +653,12 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
                 mapIcons[b].enabled = !playerById.IsDead;
             }
             IconPool = new Nebula.Utilities.ObjectPool<SpriteRenderer>(AmongUsLLImpl.ShipStatusInstance.MapPrefab.HerePoint, base.transform);
-            DeadIconPool = new Nebula.Utilities.ObjectPool<SpriteRenderer>(AmongUsLLImpl.ShipStatusInstance.MapPrefab.HerePoint, base.transform);
-            DeadIconPool.OnInstantiated = delegate (SpriteRenderer icon)
+            DeadIconPool = new Nebula.Utilities.ObjectPool<SpriteRenderer>(AmongUsLLImpl.ShipStatusInstance.MapPrefab.HerePoint, base.transform)
             {
-                PlayerMaterial.SetColors(UnityEngine.Color.gray, icon);
+                OnInstantiated = delegate (SpriteRenderer icon)
+                {
+                    PlayerMaterial.SetColors(UnityEngine.Color.gray, icon);
+                }
             };
         }
 
@@ -731,4 +732,85 @@ public class CrawlerEngineer : DefinedSingleAbilityRoleTemplate<CrawlerEngineer.
         private Predicate<IPlayerlike>? showPredicate;
         private Action<int>? postShownAction;
     }
+
+    public class CrawlerEngineerTrackAbility : FlexibleLifespan, IGameOperator, IBindPlayer
+    {
+        List<TrackingArrowAbility> arrows = [];
+
+        private GamePlayer myPlayer;
+        internal CrawlerEngineer.Ability crawlerEngineer;
+
+        GamePlayer IBindPlayer.MyPlayer => myPlayer;
+
+        public CrawlerEngineerTrackAbility(GamePlayer player, Ability crawlerEngineer)
+        {
+            myPlayer = player;
+            this.crawlerEngineer = crawlerEngineer;
+
+            this.Register(crawlerEngineer.MyPad);
+            NebulaGameManager.Instance?.AllPlayerInfo.Where(p => !p.AmOwner && p.IsAlive && !p.CanKill(crawlerEngineer.MyPlayer)).Do(p => TryRegisterArrow(p));
+
+            var arrowAbility = new DeadbodyArrowAbility();
+            arrowAbility.RegisterSelf();
+            arrowAbility.Bind(this);
+
+            GameOperatorManager.Instance?.Subscribe<GameUpdateEvent>(ev => arrowAbility.ShowArrow = myPlayer.IsAlive, this);
+        }
+
+        private void TryRegisterArrow(GamePlayer player)
+        {
+            if (myPlayer.TryGetAbility<EvilTracker.Ability>(out var ability)) return;
+            if (!arrows.Any(a => a.MyPlayer == player)) arrows.Add(new TrackingArrowAbility(player, 0f, myPlayer.Role.Role.Team.Color).Register(this));
+        }
+
+        ShowPlayersMapLayer? mapLayer = null;
+
+        [Local]
+        void OnOpenMap(AbstractMapOpenEvent ev)
+        {
+            if (crawlerEngineer.MyPad != null && ev is not MapOpenAdminEvent && !MeetingHud.Instance.AsBoolFast() && !myPlayer.IsDead)
+            {
+                if (!mapLayer.AsBoolFast())
+                {
+                    mapLayer = UnityHelper.CreateObject<ShowPlayersMapLayer>("CountLayer", MapBehaviour.Instance.transform, new UnityEngine.Vector3(0f, 0f, -1f), null);
+                    this.BindGameObject(mapLayer.gameObject);
+
+                    if (crawlerEngineer.MyPlayer.PlayerId != myPlayer.PlayerId)
+                    {
+                        mapLayer.collider.Destroy();
+                        mapLayer.dotRenderer.Destroy();
+                        mapLayer.camera.Destroy();
+                    }
+                    else
+                        MapBehaviour.Instance?.ColorControl?.SetColor(new UnityEngine.Color32(171, 0, 126, 255));
+
+                    mapLayer.SetUp(p => true, null!, false, null!);
+                }
+                mapLayer!.gameObject.SetActive(true);
+                return;
+            }
+            if (mapLayer.AsBoolFast()) mapLayer!.gameObject.SetActive(false);
+        }
+
+        [OnlyMyPlayer]
+        void OnPlayerDead(PlayerDieEvent ev)
+        {
+            this.Release();
+        }
+
+        [Local]
+        void OnSetRole(PlayerRoleSetEvent ev)
+        {
+            if (myPlayer == ev.Player && (myPlayer.CanKill(crawlerEngineer.MyPlayer) || crawlerEngineer.MyPlayer.CanKill(myPlayer)))
+                this.Release();
+
+            if (!ev.Player.AmOwner && !myPlayer.CanKill(ev.Player) && !ev.Player.CanKill(myPlayer))
+                TryRegisterArrow(ev.Player);
+            else
+            {
+                arrows.RemoveAll(a => { if (a.MyPlayer == ev.Player) { a.Release(); return true; } else return false; });
+            }
+        }
+    }
+
 }

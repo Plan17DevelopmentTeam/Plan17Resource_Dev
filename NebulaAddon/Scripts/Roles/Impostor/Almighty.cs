@@ -77,7 +77,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                         if (!button.IsInEffect)
                         {
                             var shapeshift = AmongUsUtil.GetRolePrefab<ShapeshifterRole>();
-                            MyPlayer.ToAUPlayer().NetTransform.Halt();
+                            MyPlayer.VanillaPlayer.NetTransform.Halt();
                             ShapeshifterMinigame shapeshifterMinigame = UnityEngine.Object.Instantiate<ShapeshifterMinigame>(shapeshift.ShapeshifterMenu);
                             shapeshifterMinigame.transform.SetParent(Camera.main.transform, false);
                             shapeshifterMinigame.transform.localPosition = new UnityEngine.Vector3(0f, 0f, -50f);
@@ -94,9 +94,9 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                     };
                     ShapeshiftButton.OnEffectEnd = (button) =>
                     {
-                        if (MyPlayer.ToAUPlayer().CurrentOutfitType == PlayerOutfitType.Shapeshifted)
+                        if (MyPlayer.VanillaPlayer.CurrentOutfitType == PlayerOutfitType.Shapeshifted)
                         {
-                            MyPlayer.ToAUPlayer().NetTransform.Halt();
+                            MyPlayer.VanillaPlayer.NetTransform.Halt();
                             RevertPlayerToNormal(!MyPlayer.Logic.InVent);
                         }
                         button.StartCoolDown();
@@ -104,7 +104,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                     };
                     (ShapeshiftButton.EffectTimer as TimerImpl).SetPredicate(() =>
                     {
-                        if (MyPlayer.ToAUPlayer().CurrentOutfitType == PlayerOutfitType.Shapeshifted && ShapeshiftButton.EffectTimer.IsProgressing)
+                        if (MyPlayer.VanillaPlayer.CurrentOutfitType == PlayerOutfitType.Shapeshifted && ShapeshiftButton.EffectTimer.IsProgressing)
                         {
                             return true;
                         }
@@ -112,7 +112,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                     });
                     (ShapeshiftButton.CoolDownTimer as TimerImpl).SetPredicate(() =>
                     {
-                        if (MyPlayer.ToAUPlayer().CurrentOutfitType == PlayerOutfitType.Default && ShapeshiftButton.CoolDownTimer.IsProgressing && AmongUsLLImpl.LocalPlayer.IsKillTimerEnabled)
+                        if (MyPlayer.VanillaPlayer.CurrentOutfitType == PlayerOutfitType.Default && ShapeshiftButton.CoolDownTimer.IsProgressing && AmongUsLLImpl.LocalPlayer.IsKillTimerEnabled)
                         {
                             return true;
                         }
@@ -253,7 +253,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
             GameOperatorManager.Instance!.Subscribe<MeetingPreStartEvent>(delegate (MeetingPreStartEvent ev)
             {
                 MyPlayer.Unbox().RemoveOutfit("Shapeshift");
-                MyPlayer.ToAUPlayer().CurrentOutfitType = PlayerOutfitType.Default;
+                MyPlayer.VanillaPlayer.CurrentOutfitType = PlayerOutfitType.Default;
                 if (MyPlayer.AmOwner)
                 {
                     ShapeshiftButton?.InterruptEffect();
@@ -263,7 +263,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
         }
         public void RevertPlayerToNormal(bool shouldAnimate = true)
         {
-            if (MyPlayer.ToAUPlayer().CurrentOutfitType == PlayerOutfitType.Shapeshifted || MeetingHud.Instance.AsBoolFast())
+            if (MyPlayer.VanillaPlayer.CurrentOutfitType == PlayerOutfitType.Shapeshifted || MeetingHud.Instance.AsBoolFast())
             {
                 VanillaRpc.ShapeshiftRpc.Invoke((MyPlayer, MyPlayer, shouldAnimate,ShapeshiftLeaveEvidence));
             }

@@ -31,6 +31,8 @@ public class BaitM : DefinedAllocatableModifierTemplate, HasCitation, DefinedAll
     private static BoolConfiguration CanSeeVentFlashOption = NebulaAPI.Configurations.Configuration("options.role.bait.canSeeVentFlash", false);
 
     public static BaitM MyRole = new BaitM();
+    Image? DefinedAssignable.IconImage => Nebula.Roles.Crewmate.Bait.MyRole.GetRoleIcon();
+
     bool IAssignableDocument.HasTips => true;
     public class Instance : RuntimeAssignableTemplate, RuntimeModifier, RuntimeAssignable, ILifespan, IReleasable, IBindPlayer, IGameOperator
     {
@@ -102,25 +104,16 @@ public class BaitM : DefinedAllocatableModifierTemplate, HasCitation, DefinedAll
                 }
             }
         }
-        /*private void CoReport(PlayerControl murderer)
-        {
-            if (BaitM.ShowKillFlashOption)
-            {
-                AmongUsUtil.PlayQuickFlash(BaitM.MyRole.RoleColor.ToUnityColor());
-            }
-            if (MeetingHud.Instance.AsBoolFast())
-            {
-                return;
-            }
-            murderer.CmdReportDeadBody(new List<PlayerControl>(PlayerControl.AllPlayerControls.ToArray()).FirstOrDefault((PlayerControl x) => x.PlayerId == MyPlayer.PlayerId).Data);
-        }*/
+
         System.Collections.IEnumerator CoReport(PlayerControl murderer)
         {
             if (ShowKillFlashOption) AmongUsUtil.PlayQuickFlash(MyRole.RoleColor);
+
             float t = ReportDelayOption + (ReportDelayDispersionOption * (float)System.Random.Shared.NextDouble());
             yield return new WaitForSeconds(t);
             if (MeetingHud.Instance.AsBoolFast()) yield break;
-            murderer.CmdReportDeadBody(MyPlayer.ToAUPlayer().Data);
+
+            murderer.CmdReportDeadBody(MyPlayer.VanillaPlayer.Data);
             NebulaAPI.IncrementStatsEntry("stats.bait.killer", 1);
         }
         [OnlyMyPlayer]
@@ -128,7 +121,7 @@ public class BaitM : DefinedAllocatableModifierTemplate, HasCitation, DefinedAll
         {
             if (ev.Murderer.AmOwner && !base.MyPlayer.AmOwner)
             {
-                NebulaManager.Instance.StartCoroutine(this.CoReport(ev.Murderer.ToAUPlayer()).WrapToIl2Cpp());
+                NebulaManager.Instance.StartCoroutine(this.CoReport(ev.Murderer.VanillaPlayer).WrapToIl2Cpp());
             }
         }
         void RuntimeAssignable.DecorateNameConstantly(ref string name, bool canSeeAllInfo, bool inEndScene)

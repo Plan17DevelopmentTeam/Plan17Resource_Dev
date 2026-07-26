@@ -1,8 +1,4 @@
-﻿using Plana.Core;
-using Plana.Roles.Crewmate;
-using UnityEngine.UIElements;
-
-namespace Plana.Roles.Modifier;
+﻿namespace Plana.Roles.Modifier;
 
 public class Desperate : DefinedModifierTemplate, DefinedModifier, DefinedAssignable, IRoleID, RuntimeAssignableGenerator<RuntimeModifier>, HasCitation, IAssignableDocument
 {
@@ -13,7 +9,7 @@ public class Desperate : DefinedModifierTemplate, DefinedModifier, DefinedAssign
         {
             return;
         }
-        configurationHolder.ScheduleAddRelated(() => new IConfigurationHolder[] { GeneralConfigurations.AssignmentOptions });
+        configurationHolder.ScheduleAddRelated(() => [GeneralConfigurations.AssignmentOptions]);
     }
     Citation HasCitation.Citation => PCitations.PlanaANDKC;
     static IntegerConfiguration NoActiveMeeting = NebulaAPI.Configurations.Configuration("options.role.desperate.meeting", (1, 15), 2);
@@ -21,6 +17,7 @@ public class Desperate : DefinedModifierTemplate, DefinedModifier, DefinedAssign
     static public Desperate MyRole = new Desperate();
     bool IAssignableDocument.HasTips => true;
     RuntimeModifier RuntimeAssignableGenerator<RuntimeModifier>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player);
+
     public class Instance : RuntimeAssignableTemplate, RuntimeModifier
     {
         DefinedModifier RuntimeModifier.Modifier => MyRole;
@@ -32,6 +29,7 @@ public class Desperate : DefinedModifierTemplate, DefinedModifier, DefinedAssign
         float time;
         int killnum;
         TextMeshPro tmp;
+
         [OnlyMyPlayer]
         [Local]
         private void OnKillPlayer(PlayerKillPlayerEvent ev)

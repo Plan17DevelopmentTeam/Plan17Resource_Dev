@@ -1,5 +1,3 @@
-using Il2CppInterop.Runtime.InteropTypes;
-using Nebula.Roles;
 using Nebula.Roles.Assignment;
 using Plana.Roles.Crewmate;
 using Plana.Roles.Modifier;
@@ -16,7 +14,6 @@ public static class APICompat
     static public Virial.Compat.Vector2 ToNebulaVector(this UnityEngine.Vector2 v) => new Virial.Compat.Vector2(v.x, v.y);
     static public Virial.Compat.Vector3 ToNebulaVector(this UnityEngine.Vector3 v) => new Virial.Compat.Vector3(v.x, v.y,v.z);
     static public GamePlayer ToNebulaPlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
-    static public PlayerControl ToAUPlayer(this GamePlayer player) => player.VanillaPlayer;
     public static IEnumerable<(byte playerId, List<DefinedModifier> role)> GetPlayersModifier(this IRoleTable table)
     {
         var grouped = (table as RoleTable).modifiers
@@ -44,10 +41,7 @@ public static class APICompat
         else
             self[target] = num;
     }
-    public static bool Prob(this float value)
-    {
-        return UnityEngine.Random.value <= value;
-    }
+
     public static KeyValuePair<byte, int> MaxPairV2(this Dictionary<byte, int> self, out bool tie)
     {
         tie = true;
@@ -66,23 +60,7 @@ public static class APICompat
         }
         return result;
     }
-    /*static public AllocationParameters MoriartizedParamaters(this DefinedRole role)
-    {
-        if (PatchManager.MoriartizedRoleDic.TryGetValue(role.Id, out var p))
-        {
-            return p;
-        }
-        return null;
 
-    }
-    static public AllocationParameters YandereRoleParamaters(this DefinedRole role)
-    {
-        if (PatchManager.YandereRoleDic.TryGetValue(role.Id, out var p))
-        {
-            return p;
-        }
-        return null;
-    }*/
     public static T Clone<T>(this T obj, Transform parent = null) where T : UnityEngine.Object
     {
         try

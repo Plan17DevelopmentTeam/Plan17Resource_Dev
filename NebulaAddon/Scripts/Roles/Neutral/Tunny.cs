@@ -85,7 +85,7 @@ public class Tunny : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
         {
             try
             {
-                if (MyPlayer.ToAUPlayer() == null)
+                if (MyPlayer.VanillaPlayer == null)
                 {
                     return;
                 }

@@ -6,11 +6,10 @@ namespace Plana.Roles.Neutral;
 public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableDocument
 {
     private static Team RoleTeam = new Team("teams.doomsayer", new Virial.Color(0f, 1f, 0.5f), TeamRevealType.OnlyMe);
-    private Doomsayer() : base("doomsayer", new UnityEngine.Color(0f,1f,0.5f).ToNebulaColor(), RoleCategory.NeutralRole, RoleTeam, [guessCorrectNumToWin, guessCanKillPlayer, GuessShowKillAnim,MeetingCanGuessNum,GuessFailSuicide,GuessFailCannotGuess, PatchManager.GuesserCannotGuessNoSpawnableRole
-        ,
+    private Doomsayer() : base("doomsayer", new Virial.Color(0f,1f,0.5f), RoleCategory.NeutralRole, RoleTeam, [guessCorrectNumToWin, guessCanKillPlayer, GuessShowKillAnim,MeetingCanGuessNum,GuessFailSuicide,GuessFailCannotGuess, PatchManager.GuesserCannotGuessNoSpawnableRole,
     new GroupConfiguration("role.doomsayer.oracleGroup",[CanUseOracle,OracleCooldown,OracleGetRoleNum,GetRoleIsSpawnable,BeforeMeetingStartNoSecondSkill],new(0f,1f,0.5f))]) 
     {
-        ConfigurationHolder?.ScheduleAddRelated(() => [Guesser.MyNiceRole.ConfigurationHolder,Guesser.MyEvilRole.ConfigurationHolder,GuesserModifier.MyRole.ConfigurationHolder]);
+        ConfigurationHolder?.ScheduleAddRelated(() => [Guesser.MyNiceRole.ConfigurationHolder, Guesser.MyEvilRole.ConfigurationHolder,GuesserModifier.MyRole.ConfigurationHolder]);
         Guesser.MyNiceRole.ConfigurationHolder?.ScheduleAddRelated(() => [ConfigurationHolder]);
         Guesser.MyEvilRole.ConfigurationHolder?.ScheduleAddRelated(() => [ConfigurationHolder]);
         GuesserModifier.MyRole.ConfigurationHolder?.ScheduleAddRelated(() => [ConfigurationHolder]);
@@ -38,7 +37,7 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
     bool IAssignableDocument.HasTips => true;
     public class Instance : RuntimeAssignableTemplate, RuntimeRole
     {
-        public static GameEnd? DoomsayerTeamWin = NebulaAPI.Preprocessor?.CreateEnd("doomsayer", MyRole.RoleColor);
+        public static GameEnd DoomsayerTeamWin = NebulaAPI.Preprocessor!.CreateEnd("doomsayer", MyRole.RoleColor);
         DefinedRole RuntimeRole.Role => MyRole;
 
         public Instance(GamePlayer player) : base(player)
@@ -50,13 +49,12 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
         {
             GameObject? binder = UnityHelper.CreateObject("DoomsayerWinCheck", MeetingHud.Instance.SkipVoteButton.transform.parent, MeetingHud.Instance.SkipVoteButton.transform.localPosition, null);
             GameOperatorManager? instance = GameOperatorManager.Instance;
-            if (instance != null)
-            {
-                instance.Subscribe<GameUpdateEvent>(delegate (GameUpdateEvent ev)
+
+            instance?.Subscribe<GameUpdateEvent>(delegate (GameUpdateEvent ev)
                 {
                     binder.gameObject.SetActive(!this.MyPlayer.IsDead && MeetingHud.Instance.CurrentState == MeetingHud.VoteStates.NotVoted);
-                }, new GameObjectLifespan(binder), 100);
-            }
+                }, new GameObjectLifespan(binder));
+
             TextMeshPro? countText = UnityEngine.Object.Instantiate<TextMeshPro>(MeetingHud.Instance.TitleText, binder.transform);
             countText.gameObject.SetActive(true);
             countText.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
@@ -96,12 +94,13 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
             },guessCanKillPlayer,GuessShowKillAnim,GuessFailSuicide,GuessFailCannotGuess,MeetingCanGuessNum);
         }
         int leftguess;
+
         [OnlyMyPlayer]
-        [Local]
         void CheckWins(PlayerCheckWinEvent ev)
         {
             ev.SetWinIf(ev.GameEnd == DoomsayerTeamWin);
         }
+
         GamePlayer? oracleTarget;
         List<byte> useskilltargets = new List<byte>();
         void RuntimeAssignable.OnActivated()

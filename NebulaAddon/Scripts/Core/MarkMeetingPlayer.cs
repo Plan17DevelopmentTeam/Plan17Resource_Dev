@@ -19,7 +19,6 @@ using Nebula.Roles.Neutral;
 using Nebula.Roles.Perks;
 using Nebula.Utilities;
 using Nebula.VoiceChat;
-using Plana.Role.Complex;
 using Plana.Roles.Crewmate;
 using Plana.Roles.Impostor;
 using Plana.Roles.Modifier;

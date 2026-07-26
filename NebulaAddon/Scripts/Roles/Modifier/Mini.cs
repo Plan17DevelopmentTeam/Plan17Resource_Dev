@@ -159,7 +159,7 @@ public class PMini : DefinedAllocatableModifierTemplate, HasCitation, DefinedAll
             var outfit = MyPlayer.Unbox().CurrentOutfit;
             if (IsMini())
             {
-                if (!outfit.Tag.ToLower().Contains("camo") && !outfit.Tag.ToLower().Contains("commscfeffect"))
+                if (!outfit.Tag.Contains("camo", StringComparison.CurrentCultureIgnoreCase) && !outfit.Tag.Contains("commscfeffect", StringComparison.CurrentCultureIgnoreCase))
                 {
                     name += ("(" + (Math.Floor(growtime / growupneedtime * 18)).ToString() + ")").Color("yellow");
                 }

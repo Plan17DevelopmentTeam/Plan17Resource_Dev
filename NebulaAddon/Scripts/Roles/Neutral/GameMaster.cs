@@ -291,7 +291,7 @@ public class GameMaster : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssign
                     {
                         inner = GUI.API.Arrange(Virial.Media.GUIAlignment.Center, NebulaGameManager.Instance.AllPlayerInfo.Where(p2 => !p2.IsDisconnected).Select(p2 => GUI.API.RawButton(Virial.Media.GUIAlignment.Center, roleMaskedTittleAttr, p2.Unbox().ColoredDefaultName, button =>
                         {
-                            p.ToAUPlayer().NetTransform.RpcSnapTo(p2.Position);
+                            p.VanillaPlayer.NetTransform.RpcSnapTo(p2.Position);
                             window.CloseScreen();
                             callback();
                         })), 4);

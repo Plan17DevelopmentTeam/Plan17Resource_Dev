@@ -239,7 +239,7 @@ public class BountyHunter : DefinedSingleAbilityRoleTemplate<BountyHunter.Abilit
                 if (ShowBountyArrowOption) TargetArrows.Add(new TrackingArrowAbility(target,ArrowUpdateIntervalOption,NebulaTeams.ImpostorTeam.Color,false).Register(this));
                 currentTargets.Add(target);
                 HideAndSeekDeathPopup hideAndSeekDeathPopup = UnityEngine.Object.Instantiate<HideAndSeekDeathPopup>(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, DestroyableSingleton<HudManager>.Instance.transform.parent);
-                hideAndSeekDeathPopup.Show(target.ToAUPlayer(), 0);
+                hideAndSeekDeathPopup.Show(target.VanillaPlayer, 0);
                 TextTranslatorTMP tmp;
                 if (hideAndSeekDeathPopup.text.transform.TryGetComponent<TextTranslatorTMP>(out tmp))
                 {

@@ -17,7 +17,6 @@ using Nebula.Map;
 using Nebula.Modules;
 using Nebula.Modules.Cosmetics;
 using Nebula.Modules.GUIWidget;
-using Nebula.Modules.Online;
 using Nebula.Patches;
 using Nebula.Roles.Assignment;
 using Nebula.Roles.Complex;
@@ -27,7 +26,6 @@ using Nebula.Roles.Perks;
 using Nebula.Utilities;
 using Nebula.VoiceChat;
 using Newtonsoft.Json;
-using Plana.Role.Complex;
 using Plana.Roles.Crewmate;
 using Plana.Roles.Impostor;
 using Plana.Roles.Modifier;
@@ -49,6 +47,7 @@ using Virial.Events.Game.Minimap;
 using Virial.Game;
 using Virial.Helpers;
 using Virial.Runtime;
+using static FilterPopUp.FilterInfoUI;
 using BindingFlags = System.Reflection.BindingFlags;
 using Color = Virial.Color;
 using DirectoryInfo = System.IO.DirectoryInfo;
@@ -58,14 +57,10 @@ using Vector2 = Virial.Compat.Vector2;
 using Vector3 = Virial.Compat.Vector3;
 
 namespace Plana.Core;
+
+[NebulaPreprocess(PreprocessPhase.PostFixStructure)]
 public class PatchManager
 {
-    //public static PatchManager instance = new PatchManager();
-    /*[System.Runtime.CompilerServices.ModuleInitializer]
-    internal static void RunOnModuleLoad()
-    {
-        Init();
-    }*/
     static PatchManager()
     {
         Init();
@@ -104,39 +99,23 @@ public class PatchManager
         }
         return null!;
     }
+
+    static void Preprocess(NebulaPreprocessor preprocessor)
+    {
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Yandere.Instance.YandereTeamWin, () => ((ISpawnable)Yandere.MyRole).CanSpawnInCurrentGame, "yandere", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Doomsayer.Instance.DoomsayerTeamWin, () => ((ISpawnable)Doomsayer.MyRole).CanSpawnInCurrentGame, "doomsayer", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Lawyer.Instance.LawyerWin, () => ((ISpawnable)Lawyer.MyRole).CanSpawnInCurrentGame, "lawyer1", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Lawyer.Instance.LawyerWin, () => ((ISpawnable)Lawyer.MyRole).CanSpawnInCurrentGame, "lawyer2", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Moriarty.Instance.MoriartyTeamWin, () => ((ISpawnable)Moriarty.MyRole).CanSpawnInCurrentGame, "moriarty1", str => str.Replace("%IMPOSTOR%", Language.Translate("document.tip.winCond.teams.impostor").Color(Impostor.MyTeam.Color.ToUnityColor())).Replace("%JACKAL%", Language.Translate("document.tip.winCond.teams.jackal").Color(Jackal.MyTeam.Color.ToUnityColor())));
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Moriarty.Instance.MoriartyTeamWin, () => ((ISpawnable)Moriarty.MyRole).CanSpawnInCurrentGame && Moriarty.CanWinByKillHolmes, "moriarty2", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Skinner.Instance.SkinnerWin, () => ((ISpawnable)Skinner.MyRole).CanSpawnInCurrentGame, "skinner", null);
+        Nebula.Game.NebulaGameEnd.RegisterWinCondTip(Ouroboros.Instance.OuroborosWin, () => ((ISpawnable)Ouroboros.MyRole).CanSpawnInCurrentGame, "ouroboros", null);
+    }
+
     public static void Init()
     {
         try
         {
-            /*new RemoteProcessArgument<ParsedLyrics>((w, l) =>
-            {
-                w.Write(l.Title);
-                w.Write(l.Artist);
-                w.Write(l.Lines.Count);
-                for (int i = 0; i < l.Lines.Count; i++)
-                {
-                    w.Write<LyricLine>(l.Lines[i]);
-                }
-            }, r =>
-            {
-                var title = r.ReadString();
-                var Artist = r.ReadString();
-                var count = r.ReadInt32();
-                List<LyricLine> list = new();
-                for (int i = 0; i < count; i++)
-                {
-                    list.Add(r.ReadCustom<LyricLine>());
-                }
-                return new ParsedLyrics(title, Artist, list);
-            });
-            new RemoteProcessArgument<LyricLine>((w, l) =>
-            {
-                w.Write(l.TimeMs);
-                w.Write(l.Text);
-            }, r =>
-            {
-                return new LyricLine(r.ReadInt32(), r.ReadString());
-            });*/
             ab = AssetBundle.LoadFromMemory(NebulaAPI.AddonAsset.GetResource("sounds.bundle")!.AsStream()!.ReadBytes());
             audioclips = new Dictionary<string, AudioClip>();
             PDebug.Log("AssetBundleLoaded IsNull:" + (ab == null ? "true" : "false"));
@@ -144,13 +123,10 @@ public class PatchManager
             harmony = new Harmony("PatchManager");
             harmony.Patch(typeof(ChatController).GetMethod("SendChat"), new HarmonyMethod(typeof(PatchManager).GetMethod("SendChat")));
             harmony.Patch(typeof(ChatController).GetMethod("Update", AccessTools.all), null, new HarmonyMethod(typeof(PatchManager).GetMethod("ChatUpdate")));
-            harmony.Patch(typeof(NebulaGameEnd).GetMethod("Preprocess", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public), null, new HarmonyMethod(typeof(PatchManager).GetMethod("LoadCustomTeamTip")));
             PDebug.Log(0);
             harmony.Patch(typeof(HudOverrideTask).GetMethod("Initialize"), null, new HarmonyMethod(typeof(PatchManager).GetMethod("CommCamouflagerEffectInitialize")));
             harmony.Patch(typeof(HudOverrideTask).GetMethod("Complete"), null, new HarmonyMethod(typeof(PatchManager).GetMethod("CommCamouflagerEffectComptele")));
-            //harmony.Patch(typeof(MeetingHud).GetMethod("Start"), null, new HarmonyMethod(typeof(PatchManager).GetMethod("LoverChatMeetingStart")));
-            //harmony.Patch(typeof(ChatController).GetMethod("AddChat"), new HarmonyMethod(typeof(PatchManager).GetMethod("LoverChatAddChat"), 1));
-            //harmony.Patch(typeof(HudManager).GetMethod("Update"), null, new HarmonyMethod(typeof(PatchManager).GetMethod("LoverChatEnableChat")));
+
             PDebug.Log(1);
             harmony.Patch(typeof(AmongUsClient).GetMethod("CoStartGame", AccessTools.all), null, new HarmonyMethod(typeof(PatchManager).GetMethod("CoStartGame")));
             harmony.Patch(typeof(ShipStatus).GetMethod("Start"), null, new HarmonyMethod(typeof(PatchManager).GetMethod("ShipStatusStartPos")));
@@ -286,9 +262,9 @@ public class PatchManager
             harmony.Patch(typeof(LobbyBehaviour).GetMethod(nameof(LobbyBehaviour.Start)), null, new HarmonyMethod(typeof(PatchManager).GetMethod(nameof(PatchManager.OnLobbyStart))));
             harmony.Patch(typeof(PlayerControl).GetMethod(nameof(PlayerControl.HandleRpc)), null, null, null, new HarmonyMethod(typeof(PatchManager).GetMethod("HandleRpcFinalizer")),null);
             harmony.Patch(typeof(MeetingRoleSelectWindow).GetMethod(nameof(MeetingRoleSelectWindow.OpenRoleSelectWindowUsingTabs),AccessTools.all), new HarmonyMethod(typeof(PatchManager).GetMethod(nameof(PatchManager.OpenRoleSelectWindowUsingTabs))));
-            harmony.Patch(typeof(Sheriff.Ability).GetConstructor(new Type[] { typeof(GamePlayer), typeof(bool), typeof(int) }), new HarmonyMethod(typeof(PatchManager).GetMethod(nameof(PatchManager.OnCreateSheriffAbility))));
-            harmony.Patch(typeof(PlayerModInfo).GetMethod(typeof(IGameObject).FullName + ".get_Position",AccessTools.all), new HarmonyMethod(typeof(PatchManager).GetMethod("PlayerPositionFix")));
+            harmony.Patch(typeof(Sheriff.Ability).GetConstructor([typeof(GamePlayer), typeof(bool), typeof(int)]), new HarmonyMethod(typeof(PatchManager).GetMethod(nameof(PatchManager.OnCreateSheriffAbility))));
             harmony.Patch(typeof(DanceModule).GetMethod("Update", AccessTools.all), new HarmonyMethod(typeof(PatchManager).GetMethod("BlockDanceModuleUpdate")));
+
             OptionPatchs.StartPatch(harmony);
             harmony.PatchAll(typeof(DarkThemePatchs));
             harmony.PatchAll(typeof(IntroPatchs));
@@ -298,10 +274,9 @@ public class PatchManager
             harmony.PatchAll(typeof(CannotSeeOtherPatch));
             harmony.PatchAll(typeof(BlockStampsPatch));
             SpeechEater.LoadPatch(harmony);
-            Splicer.LoadPatch(harmony);
+            Plana.Roles.Complex.Splicer.LoadPatch(harmony);
             Scrambler.LoadPatch(harmony);
             Crow.LoadPatch(harmony);
-            CrawlerEngineer.LoadPatch(harmony);
             NinjaFix.LoadPatch(harmony);
             CriminalistWriter.LoadPatch(harmony);
             Disposer.LoadPatch(harmony);
@@ -314,7 +289,6 @@ public class PatchManager
             Sheriff.MyRole.ConfigurationHolder!.AppendConfiguration(SheriffSuicideKillTarget);
             Doctor.MyRole.ConfigurationHolder!.AppendConfiguration(DoctorCanUseShieldOption);
             Doctor.MyRole.ConfigurationHolder!.AppendConfiguration(DoctorShieldNoBlockGuessedOption);
-            //GeneralConfigurations.AssignmentOptions.AppendConfiguration(RoleDraft.DraftOptions);
             GeneralConfigurations.AssignmentOptions.AppendConfiguration(AssignHostOpOption);
             GeneralConfigurations.AssignmentOptions.AppendConfiguration(HostIsGameMaster);
             GeneralConfigurations.AssignmentOptions.AppendConfiguration(AutoAssignFirstDeadShield);
@@ -357,8 +331,6 @@ public class PatchManager
             GeneralConfigurations.MapOptions.AppendConfigurations([PolusHasOxygenSabotage,PolusOxygenSabotageTime,CommSabCamouflagerEffectActive,
                 CommSabRandomCosmic,TimeLimit,TimeLimitMin]);
             Navvy.MyRole.ConfigurationHolder!.AppendConfiguration(NavvyCanUseCamera);
-            Psychic.MyRole.ConfigurationHolder!.AppendConfiguration(PsychicSendMessageMode);
-            Collator.MyRole.ConfigurationHolder!.AppendConfiguration(collatorSendMessageMode);
             Sidekick.MyRole.ConfigurationHolder.AppendConfigurations([SidekickPromoteToJackalNoJackalizedRole, SidekickPromoteToJackalRandomJackalizedRole]);
             Jackal.MyRole.ConfigurationHolder!.AppendConfigurations([JackalCanInvokeSabotage, NoAliveImpostorSabotageJackalWin, JackalUseOldPromoteSidekick]);
             IEnumerable<IConfiguration> options = [AccelTrapCost, AccelTrapOnlyCrewmate, DecelTrapCost, DecelTrapOnlyImpostor, PlaceTrapNoMeetingStart];
@@ -384,7 +356,7 @@ public class PatchManager
             new ClientOption((ClientOption.ClientOptionType)129, "myRolesScreenUseIconSort", ["options.switch.off", "options.switch.on"], 1);
             new ClientOption((ClientOption.ClientOptionType)130, "blockStamps", ["options.switch.off", "options.switch.on"], 0);
             GeneralConfigurations.AssignmentOptions.ScheduleAddRelated(() => [Desperate.MyRole.ConfigurationHolder!]);
-            //Jackal.MyRole.ConfigurationHolder.Illustration = NebulaAPI.AddonAsset.GetResource("JackalOption.png")!.AsImage();
+
             Hint WithImage(string id)
             {
                 return new HintWithImage(NebulaAPI.AddonAsset.GetResource("Hints/" + id.HeadUpper() + ".png")!.AsImage()!, new TranslateTextComponent("hint." + id.HeadLower() + ".title"), new TranslateTextComponent("hint." + id.HeadLower() + ".detail"));
@@ -395,10 +367,7 @@ public class PatchManager
             HintManager.RegisterHint(WithImage("KindnessJackal"));
             HintManager.RegisterHint(WithImage("Plan17HB"));
             HintManager.RegisterHint(WithImage("Rolenumbers"));
-            /*NebulaAPI.Preprocessor!.SchedulePreprocess(PreprocessPhase.BuildAssignmentTypes, () =>
-            {
-                LoadAddonRolesAssignmentTypes();
-            });*/
+
             PDebug.Log("Done!");
             if (DataManager.Settings.Language.CurrentLanguage == SupportedLangs.SChinese || DataManager.Settings.Language.CurrentLanguage == SupportedLangs.English)
             {
@@ -411,6 +380,7 @@ public class PatchManager
             PDebug.Log(e);
         }
     }
+
     public static Team DreamweaverAndInsomniacsTeam = new Team("teams.DreamweaverAndInsomniacs", new(216, 164, 246), TeamRevealType.OnlyMe);
     public static Team GameMasterTeam = new Team("teams.gm", new(255, 91, 112), TeamRevealType.OnlyMe);
     public static Team ViolatorTeam = new Team("teams.violator", new(255, 91, 112), TeamRevealType.Everyone);
@@ -469,8 +439,6 @@ public class PatchManager
     static BoolConfiguration AssignHostOpOption = NebulaAPI.Configurations.Configuration("options.general.AssignHostOp", true, () => !GeneralConfigurations.AssignOpToHostOption);
     static BoolConfiguration SidekickPromoteToJackalRandomJackalizedRole = NebulaAPI.Configurations.Configuration("options.role.sidekick.promoteRandomJackalizedRole", false, () => Jackal.JackalizedImpostorOption && SidekickPromoteToJackalNoJackalizedRole != null && !SidekickPromoteToJackalNoJackalizedRole);
     static BoolConfiguration SidekickPromoteToJackalNoJackalizedRole = NebulaAPI.Configurations.Configuration("options.role.sidekick.promoteNoJackalizedRole", false, () => Jackal.JackalizedImpostorOption && !SidekickPromoteToJackalRandomJackalizedRole);
-    static BoolConfiguration PsychicSendMessageMode = NebulaAPI.Configurations.Configuration("options.role.psychic.sendmessagemode", false);
-    static BoolConfiguration collatorSendMessageMode = NebulaAPI.Configurations.Configuration("options.role.collator.sendmessagemode", false);
     public static BoolConfiguration EvilTrapperKillTrapPLUS = NebulaAPI.Configurations.Configuration("options.role.trapper.EvilTrapperKillTrapPLUS", false);
     public static BoolConfiguration AccelTrapOnlyCrewmate = NebulaAPI.Configurations.Configuration("options.role.trapper.AccelTrapOnlyCrewmate", false);
     public static BoolConfiguration DecelTrapOnlyImpostor = NebulaAPI.Configurations.Configuration("options.role.trapper.DecelTrapOnlyImpostor", false);
@@ -484,6 +452,8 @@ public class PatchManager
     static BoolConfiguration InVisibleDestroyCanMove = NebulaAPI.Configurations.Configuration("options.role.destroyer.invisibledestroycanmove", false);
     static BoolConfiguration SnatcherCannotGuessSnatchedPlayer = NebulaAPI.Configurations.Configuration("options.role.snatcher.cannotguessSnatchedPlayer", false);
     static BoolConfiguration JackalUseOldPromoteSidekick = NebulaAPI.Configurations.Configuration("options.role.jackal.useoldpromotesidekick", false);
+    static BoolConfiguration PsychicSendMessageMode = NebulaAPI.Configurations.Configuration("options.role.psychic.sendmessagemode", false);
+    static BoolConfiguration collatorSendMessageMode = NebulaAPI.Configurations.Configuration("options.role.collator.sendmessagemode", false);
     public static BoolConfiguration GuesserCannotGuessNoSpawnableRole = NebulaAPI.Configurations.Configuration("options.role.guesser.cannotguessnospwanableRole", true);
     static BoolConfiguration JackalCanInvokeSabotage = NebulaAPI.Configurations.Configuration("options.role.jackal.canInvokeSabotage", false);
     static BoolConfiguration NoAliveImpostorSabotageJackalWin = NebulaAPI.Configurations.Configuration("options.role.jackal.noAliveImpostorSabotageWin", false, () => JackalCanInvokeSabotage);
@@ -539,20 +509,12 @@ public class PatchManager
     public static int usebubblenum;
     static List<byte> votedPlayerId = new List<byte>();
     public static GameObject EnterCodeSelectServer;
+
     public static bool BlockDanceModuleUpdate()
     {
         return false;
     }
-    public static bool PlayerPositionFix(GamePlayer __instance,ref Virial.Compat.Vector2 __result)
-    {
-        if (!__instance.IsDisconnected)
-        {
-            __result = __instance.Unbox().MyControl.transform.position;
-            return false;
-        }
-        __result = Virial.Compat.Vector2.Zero;
-        return false;
-    }
+
     public static bool OnCreateSheriffAbility(Sheriff.Ability __instance, GamePlayer player, bool isUsurped, int shots)
     {
         if (!SheriffSuicideKillTarget)
@@ -896,9 +858,7 @@ public class PatchManager
     }
     public static bool BetterFillServer(ServerDropdown __instance)
     {
-        IEnumerable<IRegionInfo> enumerable = DestroyableSingleton<ServerManager>.Instance.AvailableRegions
-            .Where((IRegionInfo r) => r.TranslateName == StringNames.NoTranslation)
-            .Concat(CustomServerLoader.CurrentAvailableRegions()).DistinctBy(r=>r.Name).ToArray<IRegionInfo>();
+        IEnumerable<IRegionInfo> enumerable = DestroyableSingleton<ServerManager>.Instance.AvailableRegions.Where((IRegionInfo r) => r.TranslateName == StringNames.NoTranslation).ToArray<IRegionInfo>();
         IRegionInfo[] defaultRegions = ServerManager.DefaultRegions.ToArray<IRegionInfo>();
         IRegionInfo[] array = enumerable.OrderBy((IRegionInfo r) => defaultRegions.FindIndex((IRegionInfo d) => d.Name == r.Name)).ToArray<IRegionInfo>();
         int num = 0;
@@ -908,7 +868,7 @@ public class PatchManager
             if (DestroyableSingleton<ServerManager>.Instance.CurrentRegion.Name == regionInfo.Name)
             {
                 __instance.defaultButtonSelected = __instance.firstOption;
-                __instance.firstOption.ChangeButtonText(regionInfo.ModTranslatedName());
+                __instance.firstOption.ChangeButtonText(ServerDropdownPatch.TranslateText(regionInfo.Name));
             }
             else
             {
@@ -1084,7 +1044,7 @@ public class PatchManager
         }
         if (target != null)
         {
-            VanillaRpc.ShapeshiftRpc.Invoke((GamePlayer.LocalPlayer, target.ToNebulaPlayer(), true, GamePlayer.LocalPlayer.Role is Assistant.Instance ? OutlawLeaderShower.AssistantShapeshiftLeaveEvidence : Almighty.ShapeshiftLeaveEvidence));
+            VanillaRpc.ShapeshiftRpc.Invoke((GamePlayer.LocalPlayer, target.ToNebulaPlayer(), true, GamePlayer.LocalPlayer.Role is Assistant.Instance ? OutlawTeam.AssistantShapeshiftLeaveEvidence : Almighty.ShapeshiftLeaveEvidence));
             GameOperatorManager.Instance?.AllOperators.Where(p => p is ModAbilityButtonImpl).Select(p => p as ModAbilityButtonImpl).Do(impl =>
             {
                 if (impl.VanillaButton.buttonLabelText.text == Language.Translate("button.label.assistant.shapeshift"))
@@ -1266,17 +1226,6 @@ public class PatchManager
     }
     static RemoteProcess<(byte, byte, byte)> RpcSabotageLogForAdmin = new("RpcLogForAdmin", (message, _) =>
     {
-        /*if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/LOG"))
-        {
-            if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/LOG/recordSabotageRpc"))
-            {
-                return;
-            }
-        }
-        else
-        {
-            return;
-        }*/
         if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
         {
             if ((SystemTypes)message.Item1 == SystemTypes.Sabotage)
@@ -1372,14 +1321,14 @@ public class PatchManager
         {
             if (ev.Player.IsDisconnected)
             {
-                if (!ev.Player.ToAUPlayer().AsBoolFast())
+                if (!ev.Player.VanillaPlayer.AsBoolFast())
                 {
                     if (ev.Player.PlayerState != PlayerStates.Alive && ev.Player.PlayerState != PlayerStates.Revived)
                     {
                         return false;
                     }
                 }
-                if (ev.Player.ToAUPlayer().Data.IsDead)
+                if (ev.Player.VanillaPlayer.Data.IsDead)
                 {
                     return false;
                 }
@@ -1664,7 +1613,7 @@ public class PatchManager
     "DestroyerKillFix",
     (message, _) =>
     {
-        NebulaManager.Instance.StartCoroutine(CoDestroyKill(message.player.ToAUPlayer(), message.target.ToAUPlayer(), message.targetPosition.AsVector3(), message.moveToLeft).WrapToIl2Cpp());
+        NebulaManager.Instance.StartCoroutine(CoDestroyKill(message.player.VanillaPlayer, message.target.VanillaPlayer, message.targetPosition.AsVector3(), message.moveToLeft).WrapToIl2Cpp());
     }
     );
     public static void RpcDestroyerPatch(Destroyer.Ability __instance, GamePlayer player, bool isUsurped)
@@ -1693,8 +1642,8 @@ public class PatchManager
         //左右どちらでキルすればよいか考える
         var targetTruePos = player.RealPlayer.TruePosition;
         var targetPos = player.Position;
-        var canMoveToLeft = Destroyer.Ability.CheckCanMove(__instance.MyPlayer.ToAUPlayer(),__instance.MyPlayer.Position, Destroyer.Ability.GetDestroyKillPosition(targetPos, true), out var leftDis);
-        var canMoveToRight = Destroyer.Ability.CheckCanMove(__instance.MyPlayer.ToAUPlayer(),__instance.MyPlayer.Position, Destroyer.Ability.GetDestroyKillPosition(targetPos, false), out var rightDis);
+        var canMoveToLeft = Destroyer.Ability.CheckCanMove(__instance.MyPlayer.VanillaPlayer,__instance.MyPlayer.Position, Destroyer.Ability.GetDestroyKillPosition(targetPos, true), out var leftDis);
+        var canMoveToRight = Destroyer.Ability.CheckCanMove(__instance.MyPlayer.VanillaPlayer,__instance.MyPlayer.Position, Destroyer.Ability.GetDestroyKillPosition(targetPos, false), out var rightDis);
         bool moveToLeft = false;
         if (canMoveToLeft && canMoveToRight && leftDis < rightDis) moveToLeft = true;
         else if (!canMoveToRight) moveToLeft = true;
@@ -1707,7 +1656,7 @@ public class PatchManager
         new StaticAchievementToken("destroyer.common2");
         achChallengeToken.Value++;
         NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
-    }, filterHeavier: p => Destroyer.Ability.CheckDestroyKill(__instance.MyPlayer.ToAUPlayer(), __instance.MyPlayer.Position,p.RealPlayer.Position)).SetLabelType(ModAbilityButton.LabelType.Impostor)
+    }, filterHeavier: p => Destroyer.Ability.CheckDestroyKill(__instance.MyPlayer.VanillaPlayer, __instance.MyPlayer.Position,p.RealPlayer.Position)).SetLabelType(ModAbilityButton.LabelType.Impostor)
      .SetAsUsurpableButton(__instance);
                 destroyButton.OnBroken = _ => Snatcher.RewindKillCooldown();
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(destroyButton.GetKillButtonLike());
@@ -1780,7 +1729,7 @@ public class PatchManager
     public static bool AdjustLightingPatch(PlayerControl __instance)
     {
         if (AmongUsLLImpl.LocalPlayer != __instance) return false;
-        if (GamePlayer.LocalPlayer != null && !(GamePlayer.LocalPlayer.Role.Role is Splicer))
+        if (GamePlayer.LocalPlayer != null && !(GamePlayer.LocalPlayer.Role.Role is Plana.Roles.Complex.Splicer))
         {
             if (!UseFlashLightMode)
             {
@@ -2245,7 +2194,7 @@ public class PatchManager
             {
                 GameOperatorManager.Instance.Subscribe<PlayerDieEvent>(ev =>
                 {
-                    UnityEngine.Object.Instantiate(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, AmongUsLLImpl.HudManagerInstance.transform.parent).Show(ev.Player.ToAUPlayer(), 0);
+                    UnityEngine.Object.Instantiate(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, AmongUsLLImpl.HudManagerInstance.transform.parent).Show(ev.Player.VanillaPlayer, 0);
                 }, __instance, 101);
             }
             string GetFormattedTime(float seconds)
@@ -2590,7 +2539,7 @@ public class PatchManager
             foreach (var p in NebulaGameManager.Instance!.AllPlayerInfo)
             {
                 if (p.AmOwner) continue;
-                if (p.IsDead || p.ToAUPlayer().Data.Role.IsImpostor) continue;
+                if (p.IsDead || p.VanillaPlayer.Data.Role.IsImpostor) continue;
                 if (p.Position.Distance(killTrap.Position) < Trapper.KillTrapSizeOption * 0.35f)
                 {
                     using (RPCRouter.CreateSection("TrapKill"))
@@ -3314,8 +3263,7 @@ public class PatchManager
             var myInfo = GamePlayer.LocalPlayer;
             var introInfo = GameOperatorManager.Instance.Run<GameShowIntroLocalEvent>(new GameShowIntroLocalEvent(myInfo.Role.Role.Team, myInfo.Role), false, true);
             var impostors = AmongUsLLImpl.CurrentGameOptionsInstance.GetAdjustedNumImpostorsModded(PlayerControl.AllPlayerControls.Count);
-            Lover.Instance lover = null;
-            if (myInfo.TryGetModifier<Lover.Instance>(out lover))
+            if (myInfo.TryGetModifier<Lover.Instance>(out Lover.Instance lover))
             {
                 __instance.ImpostorText.text = Language.Translate("intro.lovers");
                 introInfo.TeamName = (lover as RuntimeAssignable).DisplayName;
@@ -3352,10 +3300,6 @@ public class PatchManager
                         break;
                     case Virial.Assignable.TeamRevealType.Teams:
                         shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role.Role.Team == myInfo.Role.Role.Team||introInfo.ShouldShowAdditionally(p.PlayerId));
-                        if (myInfo.Role.Role.Team == Impostor.MyTeam)
-                        {
-                            shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role is OutlawLeader.Instance || !OutlawLeader.IsOutlawTeam(p.GetModInfo()));
-                        }
                         break;
                 }
             }
@@ -3385,10 +3329,7 @@ public class PatchManager
 
         static System.Collections.IEnumerator CoShowTeam(IntroCutscene __instance, GamePlayer myInfo, PlayerControl[] shownPlayers, float duration, GameShowIntroLocalEvent introInfo,bool isLover=false)
         {
-            if (__instance.overlayHandle == null)
-            {
-                __instance.overlayHandle = DestroyableSingleton<DualshockLightManager>.Instance.AllocateLight();
-            }
+            __instance.overlayHandle ??= DestroyableSingleton<DualshockLightManager>.Instance.AllocateLight();
             yield return AmongUsLLImpl.ShipStatusInstance.CosmeticsCache.PopulateFromPlayers();
             AmongUsLLImpl.SoundManagerInstance.PlaySound(__instance.IntroStinger, false, 1f, null);
             UnityEngine.Color c = isLover?Lover.Colors[0].ToUnityColor():introInfo.TeamColor.ToUnityColor();
@@ -3461,7 +3402,7 @@ public class PatchManager
                 __instance.TeamTitle.color = ismadmate || isviolator ? UnityEngine.Color.Lerp(c, toColor, p) : c;
                 if (ismadmate && p >= 0.79f)
                 {
-                    __instance.TeamTitle.text = OutlawLeader.IsOutlawTeam(myInfo) ? Language.Translate("role.outlawLeaderShower.name") : introInfo.TeamName.ToUpper() == "CREWMATE" ? "MADMATE" : Language.Translate("role.madmate.name");
+                    __instance.TeamTitle.text = introInfo.TeamName.Equals("CREWMATE", StringComparison.CurrentCultureIgnoreCase) ? "MADMATE" : Language.Translate("role.madmate.name");
                     __instance.ImpostorText.text = Language.Translate("role.madmateplus.generalBlurb");
                 }
                 if (isviolator && p >= 0.79f)
@@ -3557,13 +3498,7 @@ public class PatchManager
                 chatBubble.TextArea.overrideColorTags = false;
                 chatBubble.TextArea.color = UnityEngine.Color.white;
                 chatBubble.Background.color = UnityEngine.Color.black;
-                /*FreeChatInputField inputField = __instance.freeChatField;
-                if (inputField != null)
-                {
-                    inputField.background.color = new Color32(40, 40, 40, byte.MaxValue);
-                    inputField.textArea.compoText.Color(UnityEngine.Color.white);
-                    inputField.textArea.outputText.color = UnityEngine.Color.white;
-                }*/
+
                 Color32 color = new Color32(40, 40, 40, byte.MaxValue);
                 __instance.freeChatField.background.color = color;
                 __instance.freeChatField.textArea.compoText.Color(UnityEngine.Color.white);
@@ -3596,19 +3531,17 @@ public class PatchManager
             }
         }
 
-        static string lastMessageKey = "";
         static RemoteProcess<(string, string)> SetOptionMessageRpc = new RemoteProcess<(string, string)>("SetOptionMessage", (message, _) =>
         {
             var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
-            var key = message.Item1;
+            var key = message.Item1.Sum(c => c);
             var item = message.Item2;
-            if (lastMessageKey.Contains(key) && notifier.activeMessages.Count > 0)
-            {
-                notifier.activeMessages[notifier.activeMessages.Count - 1].UpdateMessage(item);
-            }
+
+            if (notifier.lastMessageKey == key && notifier.activeMessages.Count > 0)
+                notifier.activeMessages[^1].UpdateMessage(item);
             else
             {
-                lastMessageKey = key;
+                notifier.lastMessageKey = key;
                 LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, UnityEngine.Vector3.zero, Quaternion.identity, notifier.transform);
                 newMessage.transform.localPosition = new Vector3(0f, 0f, -2f);
                 var action = () => notifier.OnMessageDestroy(newMessage);
@@ -3829,14 +3762,14 @@ public class PatchManager
             if (key.Contains("diagnosis"))
                 return;
 
-            string FormatFloat(float number) =>
+            static string FormatFloat(float number) =>
                 number.ToString().Contains('.') && number.ToString().Split('.')[1].Length >= 2
                     ? number.ToString("F2")
                     : number.ToString();
 
             var value = FormatFloat(__instance.CurrentValue) + (key switch
             {
-                _ when key.IndexOf("coolDown", StringComparison.OrdinalIgnoreCase) >= 0 || key.IndexOf("duration", StringComparison.OrdinalIgnoreCase) >= 0 => Language.Translate("options.sec"),
+                _ when key.Contains("coolDown", StringComparison.OrdinalIgnoreCase) || key.Contains("duration", StringComparison.OrdinalIgnoreCase) => Language.Translate("options.sec"),
                 _ when key.Contains("ratio") || key.Contains("Range") => Language.Translate("options.cross"),
                 _ when key.Contains("roleChance") => Language.Translate("options.percentage"),
                 _ when key.Contains("type") => "",
@@ -4029,9 +3962,9 @@ public class PatchManager
         {
             foreach (var p in NebulaGameManager.Instance?.AllPlayerInfo ?? [])
             {
-                if (killGuardPlayers != null && killGuardPlayers.ContainsKey(p.ToAUPlayer()))
+                if (killGuardPlayers != null && killGuardPlayers.ContainsKey(p.VanillaPlayer))
                 {
-                    p.AddModifier(firstdead.MyRole, [killGuardPlayers[p.ToAUPlayer()]]);
+                    p.AddModifier(firstdead.MyRole, [killGuardPlayers[p.VanillaPlayer]]);
                 }
                 if (AutoAssignFirstDeadShield && !p.TryGetModifier<firstdead.Instance>(out var modifier))
                 {
@@ -4542,7 +4475,7 @@ public class PatchManager
             var impostors = PlayerControl.AllPlayerControls.GetFastEnumerator().Where(p => p.ToNebulaPlayer().IsImpostor).ToArray();
             foreach (var player in impostors)
             {
-                alphas.Add((-0.1f * (player.GetTruePosition() - __instance.ToAUPlayer().GetTruePosition()).magnitude) + 0.8f);
+                alphas.Add((-0.1f * (player.GetTruePosition() - __instance.VanillaPlayer.GetTruePosition()).magnitude) + 0.8f);
                 //distances.Add((player.GetTruePosition() - __instance.ToAUPlayer().GetTruePosition()).magnitude);
             }
             color.a = Mathn.Clamp(Mathf.Max(new Il2CppStructArray<float>(alphas.ToArray())), isfinal ? 0.1f : 0f, 0.4f);
@@ -4610,7 +4543,7 @@ public class PatchManager
                     obj.sfx = null;
                 }
                 obj.transform.position += new UnityEngine.Vector3(i == 0 ? 0 : i == 1 ? 2.5f : -2.5f, 0f);
-                obj.Show(impostors[i].ToAUPlayer(), 0);
+                obj.Show(impostors[i].VanillaPlayer, 0);
                 impostors[i].GainSpeedAttribute(0f, ImpostorCannotMoveTime, false, 0, "NebulaHNS:CannotMove");
             }
             if (CannotReport)
@@ -4782,7 +4715,7 @@ public class PatchManager
         if (DiagnosisModePatchs.IsEnabled)
         {
             var prob = 0.5f - 0.1f * NebulaGameManager.Instance!.AllPlayerInfo.Count(p => p.MyKiller != null && p.MyKiller.PlayerId == __instance.MyPlayer.PlayerId);
-            __result = prob.Prob();
+            __result = Mathn.Prob(prob);
         }
     }
     public static List<TrackingArrowAbility> SpectreExArrowList = new List<TrackingArrowAbility>();
@@ -5858,26 +5791,7 @@ public class PatchManager
             }
         }
     });
-    public static void LoadCustomTeamTip()
-    {
-        RegisterWinCondTip(Yandere.Instance.YandereTeamWin, () => ((ISpawnable)Yandere.MyRole).IsSpawnable, "yandere", null!);
-        RegisterWinCondTip(Doomsayer.Instance.DoomsayerTeamWin, () => ((ISpawnable)Doomsayer.MyRole).IsSpawnable, "doomsayer", null!);
-        RegisterWinCondTip(Lawyer.Instance.LawyerWin, () => ((ISpawnable)Lawyer.MyRole).IsSpawnable, "lawyer1", null!);
-        RegisterWinCondTip(Lawyer.Instance.LawyerWin, () => ((ISpawnable)Lawyer.MyRole).IsSpawnable, "lawyer2", null!);
-        RegisterWinCondTip(Moriarty.Instance.MoriartyTeamWin, () => ((ISpawnable)Moriarty.MyRole).IsSpawnable, "moriarty1", str => str.Replace("%IMPOSTOR%", Language.Translate("document.tip.winCond.teams.impostor").Color(Impostor.MyTeam.Color.ToUnityColor())).Replace("%JACKAL%", Language.Translate("document.tip.winCond.teams.jackal").Color(Jackal.MyTeam.Color.ToUnityColor())));
-        RegisterWinCondTip(Moriarty.Instance.MoriartyTeamWin, () => ((ISpawnable)Moriarty.MyRole).IsSpawnable && Moriarty.CanWinByKillHolmes, "moriarty2", null!);
-        RegisterWinCondTip(Skinner.Instance.SkinnerWin, () => ((ISpawnable)Skinner.MyRole).IsSpawnable, "skinner", null!);
-        RegisterWinCondTip(Ouroboros.Instance.OuroborosWin, () => ((ISpawnable)Ouroboros.MyRole).IsSpawnable, "ouroboros", null!);
-    }
-    private static void RegisterWinCondTip(GameEnd gameEnd, Func<bool> predicate, string name, Func<string, string> decorator = null!)
-    {
-        NebulaAPI.RegisterTip(new WinConditionTip(gameEnd, predicate, () => Language.Translate("document.tip.winCond." + name + ".title"), delegate
-        {
-            string text = Language.Translate("document.tip.winCond." + name);
-            Func<string, string> decorator2 = decorator;
-            return ((decorator2 != null) ? decorator2(text) : null) ?? text;
-        }));
-    }
+
     public static bool CrewmateCheck(GameUpdateEvent ev)
     {
         try
@@ -5909,14 +5823,13 @@ public class PatchManager
             {
                 return false;
             }
-            foreach (PlayerControl pl in PlayerControl.AllPlayerControls)
+            foreach (var p in GamePlayer.AllPlayers)
             {
-                var p = pl.ToNebulaPlayer();
                 if (!p.IsDead)
                 {
                     totalAlive++;
                     Lover.Instance lover;
-                    if (p.Role.Role.Team == Impostor.MyTeam && (!p.TryGetModifier<Lover.Instance>(out lover!) || lover.IsAloneLover) && !p.TryGetModifier<HasLove.Instance>(out var love))
+                    if ((p.Role.Role.Team == Impostor.MyTeam) && (!p.TryGetModifier<Lover.Instance>(out lover!) || lover.IsAloneLover) && !p.TryGetModifier<HasLove.Instance>(out var love))
                     {
                         impostors++;
                     }
@@ -6145,7 +6058,7 @@ public class PatchManager
     {
         if (m.sender.AmOwner || NebulaGameManager.Instance.CanSeeAllInfo)
         {
-            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(m.sender.ToAUPlayer(), m.message);
+            AmongUsLLImpl.HudManagerBridge.Chat.AddChat(m.sender.VanillaPlayer, m.message);
         }
     });
     public static RemoteProcess<(string info, bool needTranslate)> RpcSendNoSenderSkillMessage = new("SendNoSenderSkillMessage", (m, _) =>
@@ -6154,11 +6067,11 @@ public class PatchManager
     });
     internal static RemoteProcess<GamePlayer> SetVisible = new RemoteProcess<Player>("SetPlayerVisible", (p, _) =>
     {
-        if (p == null || p.ToAUPlayer() == null)
+        if (p == null || p.VanillaPlayer == null)
         {
             return;
         }
-        p.ToAUPlayer().Visible = true;
+        p.VanillaPlayer.Visible = true;
     });
     public static void TaskPanelPosPatch(TaskPanelBehaviour __instance)
     {
@@ -6444,7 +6357,7 @@ public class PatchManager
                 SetVanillaRole(impostors.ToArray());
                 return false;
             }
-            if (CanInvokeSpecialMeeting && DiagnosisIsActive && (DiagnosisChance / 100f).Prob())
+            if (CanInvokeSpecialMeeting && DiagnosisIsActive && Mathn.Prob(DiagnosisChance / 100f))
             {
                 RoleTable table = new();
                 var customChances = AssignmentType.AllTypes.Select((AssignmentType t) => new List<BetterRoleChance>(from r in Nebula.Roles.Roles.AllRoles.Where(delegate (DefinedRole r)
@@ -6529,7 +6442,7 @@ public class PatchManager
                         {
                             if (allRoles.Any(r => r.Any(r => r.role.Id == tuple.role.Id)))
                             {
-                                if ((tuple.chance / 100f).Prob())
+                                if (Mathn.Prob(tuple.chance / 100f))
                                 {
                                     if (impostors.Contains(tuple.player))
                                     {
@@ -6581,7 +6494,7 @@ public class PatchManager
                     {
                         try
                         {
-                            if ((tuple.chance / 100f).Prob())
+                            if (Mathn.Prob(tuple.chance / 100f))
                             {
                                 var usedRoleList = tuple.role == RoleCategory.ImpostorRole ? impostorRoles : tuple.role == RoleCategory.NeutralRole ? neutralRoles : crewmateRoles;
 
@@ -6776,7 +6689,7 @@ public class PatchManager
                     {
                         return p.IsDead || (exiledBitFlag & (1 << (int)p.PlayerId)) != 0;
                     }
-                    int num = GamePlayer.AllPlayers.Count((Player p) => !IsDead(p) && (p.IsImpostor || OutlawLeader.IsOutlawTeam(p)));
+                    int num = GamePlayer.AllPlayers.Count(p => !IsDead(p) && (p.IsImpostor || OutlawTeam.IsOutlaw(p)));
                     confirmText = Language.Translate((num > 1) ? "exile.confirmEject.impostor.p" : "exile.confirmEject.impostor.s").Replace("%NUM%", num.ToString());
                     GamePlayer localPlayer = GamePlayer.LocalPlayer;
                     int i = GeneralConfigurations.ConfirmEjectConditionOption.GetValue();
@@ -6787,7 +6700,7 @@ public class PatchManager
                             flag = true;
                             break;
                         case 1:
-                            flag = localPlayer.IsImpostor || OutlawLeader.IsOutlawTeam(localPlayer);
+                            flag = localPlayer.IsImpostor || OutlawTeam.IsOutlaw(localPlayer);
                             break;
                         case 2:
                             flag = localPlayer.Role.Role.IsKiller;
@@ -7035,12 +6948,12 @@ public class PatchManager
                         {
                             return;
                         }
-                        if ((1f - (KillChance / 100f)).Prob())
+                        if (Mathn.Prob(1f - (KillChance / 100f)))
                         {
                             return;
                         }
                         var deadplayer = local;
-                        if (0.4f.Prob())
+                        if (Mathn.Prob(0.4f))
                         {
                             deadplayer = closeplayers.Random();
                         }
@@ -7969,7 +7882,7 @@ public class PatchManager
             {
                 if (ev.Role.Role.Category == RoleCategory.ImpostorRole)
                 {
-                    impostors?.Add(ev.Player.ToAUPlayer());
+                    impostors?.Add(ev.Player.VanillaPlayer);
                 }
             }
             void OnGameStart(GameStartEvent ev)
@@ -7985,7 +7898,7 @@ public class PatchManager
                 {
                     if (player.IsImpostor)
                     {
-                        impostors.Add(player.ToAUPlayer());
+                        impostors.Add(player.VanillaPlayer);
                     }
                 }
                 scaryMusicDistance = 55f * AmongUsLLImpl.CurrentGameOptionsInstance.GetFloat(FloatOptionNames.PlayerSpeedMod);
@@ -8008,7 +7921,7 @@ public class PatchManager
                     {
                         return;
                     }
-                    list.Remove(ev.Player.ToAUPlayer());
+                    list.Remove(ev.Player.VanillaPlayer);
                 }
             }
 
@@ -8338,7 +8251,7 @@ public class PatchManager
                 {
                     var obj = UnityEngine.Object.Instantiate(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, AmongUsLLImpl.HudManagerInstance.transform.parent);
                     obj.transform.position += new UnityEngine.Vector3(0f,-0.5f);
-                    obj.Show(ev.Player.ToAUPlayer(), 1);
+                    obj.Show(ev.Player.VanillaPlayer, 1);
                     TextTranslatorTMP tmp;
                     if (obj.text.transform.TryGetComponent<TextTranslatorTMP>(out tmp))
                     {

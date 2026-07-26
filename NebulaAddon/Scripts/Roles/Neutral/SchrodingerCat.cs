@@ -6,12 +6,6 @@ using Nebula.Roles.Neutral;
 using Nebula.Utilities;
 using Plana.Roles.Modifier;
 using Plana.Roles.Neutral;
-using Rewired.Demos.CustomPlatform;
-using Virial;
-using Virial.Assignable;
-using Virial.Attributes;
-using Virial.Events.Player;
-using Virial.Game;
 
 public class SchrodingerCat()
     : DefinedRoleTemplate("SchrodingerCat", RoleTeam.Color, RoleCategory.NeutralRole, RoleTeam, [CanSeeKiller,CanNotKillKiller]), DefinedRole,HasCitation, IAssignableDocument

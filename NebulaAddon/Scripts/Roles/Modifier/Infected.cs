@@ -77,6 +77,7 @@ public class Infected : DefinedModifierTemplate, DefinedAllocatableModifier, Has
     }
     SpecialAssignment[] DefinedAllocatableModifier.SpecialAssignment => PatchManager.CanGenerateInfected ? [new SpecialAssignment(this, 1, 100, null, null)] : Array.Empty<SpecialAssignment>();
     int HasAssignmentRoutine.AssignPriority => 0;
+
     Citation HasCitation.Citation => PCitations.PlanaANDKC;
     bool DefinedModifier.IsMadmate => true;
     public static BoolConfiguration InfectedHasGuesser = NebulaAPI.Configurations.Configuration("options.assignment.InfectedHasGuesser", true);

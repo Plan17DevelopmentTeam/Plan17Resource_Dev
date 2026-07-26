@@ -55,7 +55,7 @@ public class Pollyanna : DefinedSingleAbilityRoleTemplate<Pollyanna.Ability>, Ha
     public static void ShowMeetingOutfitPatch(ref NetworkedPlayerInfo.PlayerOutfit playerOutfit)
     {
         var outfit = playerOutfit;
-        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.TryGetAbility<Ability>(out var ability) && ability.RemoteKillPlayers.Any(p=>p.ToAUPlayer().Data.DefaultOutfit==outfit)))
+        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.TryGetAbility<Ability>(out var ability) && ability.RemoteKillPlayers.Any(p=>p.VanillaPlayer .Data.DefaultOutfit==outfit)))
         {
             playerOutfit = NebulaGameManager.Instance.UnknownOutfit.outfit;
             var allDeadBodies = Helpers.AllDeadBodies(true);
@@ -89,18 +89,18 @@ public class Pollyanna : DefinedSingleAbilityRoleTemplate<Pollyanna.Ability>, Ha
             var cid = alivePlayerOutfit.outfit.ColorId;
             alivePlayerOutfit.outfit.ColorId = deadPlayerOutfit.outfit.ColorId;
             deadPlayerOutfit.outfit.ColorId = cid;
-            a.ToAUPlayer().RawSetOutfit(deadPlayerOutfit.outfit, PlayerOutfitType.Default);
-            a.ToAUPlayer().Data.SetOutfit(PlayerOutfitType.Default, deadPlayerOutfit.outfit);
+            a.VanillaPlayer.RawSetOutfit(deadPlayerOutfit.outfit, PlayerOutfitType.Default);
+            a.VanillaPlayer.Data.SetOutfit(PlayerOutfitType.Default, deadPlayerOutfit.outfit);
             a.Unbox().DefaultOutfit = new(deadPlayerOutfit, "", -99, true);
-            d.ToAUPlayer().RawSetOutfit(alivePlayerOutfit.outfit, PlayerOutfitType.Default);
-            d.ToAUPlayer().Data.SetOutfit(PlayerOutfitType.Default, alivePlayerOutfit.outfit);
+            d.VanillaPlayer.RawSetOutfit(alivePlayerOutfit.outfit, PlayerOutfitType.Default);
+            d.VanillaPlayer.Data.SetOutfit(PlayerOutfitType.Default, alivePlayerOutfit.outfit);
             d.Unbox().DefaultOutfit = new(alivePlayerOutfit, "", -99, true);
             if (MeetingHud.Instance.AsBoolFast())
             {
                 var aliveArea = MeetingHud.Instance.playerStates.FirstOrDefault(area => area.TargetPlayerId == a.PlayerId);
                 var deadArea = MeetingHud.Instance.playerStates.FirstOrDefault(area => area.TargetPlayerId == d.PlayerId);
-                aliveArea.SetCosmetics(d.ToAUPlayer().Data);
-                deadArea.SetCosmetics(a.ToAUPlayer().Data);
+                aliveArea.SetCosmetics(d.VanillaPlayer.Data);
+                deadArea.SetCosmetics(a.VanillaPlayer.Data);
                 UnityEngine.Vector3 aliveAreaPos = aliveArea.transform.position, deadAreaPos = deadArea.transform.position;
                 aliveArea.transform.position = deadAreaPos;
                 deadArea.transform.position = aliveAreaPos;
@@ -113,8 +113,8 @@ public class Pollyanna : DefinedSingleAbilityRoleTemplate<Pollyanna.Ability>, Ha
             {
                 var alivePos = a.Position.ToUnityVector();
                 var deadPos = d.Position.ToUnityVector();
-                a.ToAUPlayer().NetTransform.SnapTo(deadPos);
-                d.ToAUPlayer().NetTransform.SnapTo(alivePos);
+                a.VanillaPlayer.NetTransform.SnapTo(deadPos);
+                d.VanillaPlayer.NetTransform.SnapTo(alivePos);
             }
             if (m.needUpdateSwap)
             {
@@ -192,7 +192,7 @@ public class Pollyanna : DefinedSingleAbilityRoleTemplate<Pollyanna.Ability>, Ha
                                 markedButton.StartCoolDown();
                                 RemoteKillPlayers.Add(player);
                                 MyPlayer.MurderPlayer(player!, PatchManager.NoHope, EventDetail.Kill, KillParameter.RemoteKill, KillCondition.TargetAlive);
-                                skillSelectedPlayer.ToAUPlayer().ShowFailedMurder();
+                                skillSelectedPlayer.VanillaPlayer.ShowFailedMurder();
                             }
                             skillSelectedPlayer = null;
                             if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();

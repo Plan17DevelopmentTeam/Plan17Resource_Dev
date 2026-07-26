@@ -1,37 +1,4 @@
-﻿using HarmonyLib;
-using Il2CppInterop.Runtime;
-using Il2CppInterop.Runtime.Injection;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Il2CppSystem.Reflection;
-using Il2CppSystem.Runtime.CompilerServices;
-using InnerNet;
-using Nebula.Map;
-using Nebula.Modules;
-using Nebula.Modules.Cosmetics;
-using Nebula.Modules.GUIWidget;
-using Nebula.Patches;
-using Nebula.Roles.Assignment;
-using Nebula.Roles.Complex;
-using Nebula.Roles.Impostor;
-using Nebula.Roles.Neutral;
-using Nebula.Roles.Perks;
-using Nebula.Utilities;
-using Nebula.VoiceChat;
-using Plana.Role.Complex;
-using Plana.Roles.Crewmate;
-using Plana.Roles.Impostor;
-using Plana.Roles.Modifier;
-using Plana.Roles.Neutral;
-using System.Reflection;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.Networking;
-using Virial;
-using Virial.Common;
-using Virial.Configuration;
-using Virial.Events.Game.Minimap;
-using Virial.Game;
-using Virial.Helpers;
+﻿using Virial.Helpers;
 using Virial.Runtime;
 using BindingFlags = System.Reflection.BindingFlags;
 using Color = UnityEngine.Color;
@@ -45,18 +12,18 @@ public static class VanillaRpc
         {
             return;
         }
-        var shapeshifter = message.Item1.ToAUPlayer();
+        var shapeshifter = message.Item1.VanillaPlayer;
         //shapeshifter.Shapeshift(message.Item2.ToAUPlayer(), message.Item3);
         shapeshifter.shapeshifting = true;
         shapeshifter.MyPhysics.SetNormalizedVelocity(UnityEngine.Vector2.zero);
-        if (GamePlayer.LocalPlayer.AmOwner && !Minigame.Instance)
+        if (GamePlayer.LocalPlayer?.AmOwner ?? false && !Minigame.Instance.AsBoolFast())
         {
             PlayerControl.HideCursorTemporarily();
         }
-        RoleEffectAnimation roleEffectAnimation = UnityEngine.Object.Instantiate<RoleEffectAnimation>(DestroyableSingleton<RoleManager>.Instance.shapeshiftAnim, message.Item1.ToAUPlayer().gameObject.transform);
+        RoleEffectAnimation roleEffectAnimation = UnityEngine.Object.Instantiate<RoleEffectAnimation>(DestroyableSingleton<RoleManager>.Instance.shapeshiftAnim, message.Item1.VanillaPlayer.gameObject.transform);
         roleEffectAnimation.SetMaskLayerBasedOnWhoShouldSee(GamePlayer.LocalPlayer.AmOwner);
         PlayerMaterial.SetColors(message.Item1.DefaultOutfit.outfit.ColorId, roleEffectAnimation.Renderer);
-        if (message.Item1.ToAUPlayer().cosmetics.FlipX)
+        if (message.Item1.VanillaPlayer.cosmetics.FlipX)
         {
             roleEffectAnimation.transform.position -= new UnityEngine.Vector3(0.14f, 0f, 0f);
         }
@@ -65,12 +32,12 @@ public static class VanillaRpc
             if (message.Item1.PlayerId == message.Item2.PlayerId)
             {
                 message.Item1.Unbox().RemoveOutfit("Shapeshift");
-                message.Item1.ToAUPlayer().CurrentOutfitType = PlayerOutfitType.Default;
+                message.Item1.VanillaPlayer.CurrentOutfitType = PlayerOutfitType.Default;
             }
             else
             {
                 message.Item1.Unbox().AddOutfit(new OutfitCandidate(message.Item2.GetOutfit(75), "Shapeshift", 50, true));
-                message.Item1.ToAUPlayer().CurrentOutfitType = PlayerOutfitType.Shapeshifted;
+                message.Item1.VanillaPlayer.CurrentOutfitType = PlayerOutfitType.Shapeshifted;
             }
             shapeshifter.cosmetics.SetScale(shapeshifter.MyPhysics.Animations.DefaultPlayerScale, shapeshifter.defaultCosmeticsScale);
             if (message.Item4)
@@ -109,7 +76,7 @@ public static class VanillaRpc
         {
             return;
         }
-        var phantomPlayer = message.Item1.ToAUPlayer();
+        var phantomPlayer = message.Item1.VanillaPlayer;
         var phantomRole = AmongUsUtil.GetRolePrefab<PhantomRole>();
         if (message.Item2)
         {

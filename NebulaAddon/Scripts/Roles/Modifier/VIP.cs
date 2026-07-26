@@ -42,7 +42,7 @@ message, bool _)
             {
                 return;
             }
-            UnityEngine.Object.Instantiate(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, AmongUsLLImpl.HudManagerInstance.transform.parent).Show(message.ToAUPlayer(), 0);
+            UnityEngine.Object.Instantiate(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, AmongUsLLImpl.HudManagerInstance.transform.parent).Show(message.VanillaPlayer, 0);
         });
         [OnlyMyPlayer]
         [Local]

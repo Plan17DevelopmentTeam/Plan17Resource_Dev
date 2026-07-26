@@ -1,4 +1,6 @@
-﻿using Nebula.Roles.Complex;
+﻿using Il2CppSystem.Text.Json;
+using NAudio.CoreAudioApi;
+using Nebula.Roles.Complex;
 using Plana.Core;
 using Plana.Roles.Crewmate;
 using Plana.Roles.Neutral;
@@ -33,6 +35,7 @@ public class Pessimist : DefinedRoleTemplate, DefinedRole, HasCitation, IAssigna
             instance.ExtendedRoleInstance = null;
         }
     });
+
     public class Instance : RuntimeAssignableTemplate, RuntimeRole, RuntimeAssignable, ILifespan, IBindPlayer, IGameOperator, IReleasable
     {
         public Instance(GamePlayer player) : base(player)
@@ -57,9 +60,11 @@ public class Pessimist : DefinedRoleTemplate, DefinedRole, HasCitation, IAssigna
                     return;
                 }
                 MyExtendedRole = ev.Dead.Role.Role;
-                ExtendedRoleInstance = MyExtendedRole.CreateInstance(MyPlayer, MyExtendedRole.DefaultAssignableArguments??Array.Empty<int>());
+
+                ExtendedRoleInstance = MyExtendedRole.CreateInstance(MyPlayer, MyExtendedRole.DefaultAssignableArguments ?? []);
                 ExtendedRoleInstance.OnActivated();
                 ExtendedRoleInstance.Register(this);
+
                 ev.Dead.SetRole(Nebula.Roles.Impostor.Impostor.MyRole);
                 if (sidekickButton==null)
                 {
@@ -69,22 +74,12 @@ public class Pessimist : DefinedRoleTemplate, DefinedRole, HasCitation, IAssigna
                 (sidekickButton as ModAbilityButtonImpl)!.PlayFlashOnce();
             }
         }
-        /*[OnlyMyPlayer]
-        void OnCheckKill(PlayerCheckCanKillLocalEvent ev)
-        {
-            if (ev.Target.IsImpostor && MyExtendedRole == null && ExtendedRoleInstance == null)
-            {
-                ev.SetAsCanKillForcedly();
-            }
-        }*/
+
         MetaScreen? LastGuesserWindow;
         [OnlyMyPlayer,Local]
         void OnMeetingDead(PlayerDieEvent ev)
         {
-            if (LastGuesserWindow!=null)
-            {
-                LastGuesserWindow.CloseScreen();
-            }
+            LastGuesserWindow?.CloseScreen();
         }
         static public MetaScreen OpenGuessWindow(Action<DefinedRole> onSelected)
         {
@@ -124,7 +119,20 @@ public class Pessimist : DefinedRoleTemplate, DefinedRole, HasCitation, IAssigna
                                         {
                                             PatchManager.RpcSendNoSenderSkillMessage.Invoke(("role.pessimist.replacedone",true));
                                         }
-                                        p.SetRole(MyExtendedRole!, MyExtendedRole!.DefaultAssignableArguments);
+
+                                        if (MyPlayer.TryGetModifier<DreamweaverModifier.Instance>(out var _))
+                                        {
+                                            MyPlayer.RemoveModifier(DreamweaverModifier.MyRole);
+                                            p.AddModifier(DreamweaverModifier.MyRole);
+                                        }
+                                        if (MyPlayer.TryGetModifier<InsomniacsModifier.Instance>(out var _))
+                                        {
+                                            MyPlayer.RemoveModifier(InsomniacsModifier.MyRole);
+                                            p.AddModifier(InsomniacsModifier.MyRole);
+                                        }
+
+                                        p.SetRole(MyExtendedRole!, ExtendedRoleInstance?.RoleArguments);
+
                                         RpcClearMyExtendedRoleInfo.Invoke(MyPlayer);
                                     }
                                 }
@@ -154,11 +162,11 @@ public class Pessimist : DefinedRoleTemplate, DefinedRole, HasCitation, IAssigna
             }
         }
         bool CurrentGuessWrong;
-        string RuntimeAssignable.OverrideRoleName(string lastRoleName, bool isShort,bool canSeeAllInfo)
+        string? RuntimeAssignable.OverrideRoleName(string lastRoleName, bool isShort,bool canSeeAllInfo)
         {
-            if ((AmOwner|| (NebulaGameManager.Instance?.CanSeeAllInfo??false))&&MyExtendedRole!=null)
+            if ((AmOwner || (NebulaGameManager.Instance?.CanSeeAllInfo??false)) && MyExtendedRole!=null)
             {
-                return lastRoleName+= " (" + MyExtendedRole.DisplayColoredName +")";
+                return lastRoleName += " (" + MyExtendedRole.DisplayColoredName +")";
             }
             return null;
         }

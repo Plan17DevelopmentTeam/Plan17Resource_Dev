@@ -22,7 +22,7 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
         {
             return;
         }
-        configurationHolder.ScheduleAddRelated(() => new IConfigurationHolder[] { Insomniacs.MyRole.ConfigurationHolder });
+        configurationHolder.ScheduleAddRelated(() => [Insomniacs.MyRole.ConfigurationHolder!]);
     }
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Dreamweaver.png")!.AsImage();
     static BoolConfiguration CanSelectRole = NebulaAPI.Configurations.Configuration("options.role.dreamweaver.canselectrole", true);
@@ -33,14 +33,14 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
     static public Dreamweaver MyRole = new Dreamweaver();
     bool IAssignableDocument.HasTips => true;
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player);
+
     DefinedRole[] DefinedRole.AdditionalRoles => [Insomniacs.MyRole];
-    public class Instance : RuntimeAssignableTemplate, RuntimeRole, RuntimeAssignable, ILifespan, IBindPlayer, IGameOperator, IReleasable
+
+    [NebulaRPCHolder]
+    public class Instance(GamePlayer player) : RuntimeAssignableTemplate(player), RuntimeRole, RuntimeAssignable, ILifespan, IBindPlayer, IGameOperator, IReleasable
     {
         DefinedRole RuntimeRole.Role => MyRole;
 
-        public Instance(GamePlayer player) : base(player)
-        {
-        }
         static TextAttributeOld ButtonAttribute = new TextAttributeOld(TextAttributeOld.BoldAttr) { Size = new(1.3f, 0.3f), Alignment = TMPro.TextAlignmentOptions.Center, FontMaterial = VanillaAsset.StandardMaskedFontMaterial }.EditFontSize(2f, 1f, 2f);
         MetaScreen OpenRoleSelectWindow(bool alpha100,List<DefinedRole> rolelist,Func<DefinedRole, bool> predicate, string underText, Action<DefinedRole> onSelected)
         {
@@ -98,8 +98,7 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
                 if (SelectRoleScreen != null)
                 {
                     var r = list[UnityEngine.Random.Range(0, list.Count)];
-                    MyPlayer.SetRole(r,r.DefaultAssignableArguments);
-                    MyPlayer.AddModifier(DreamweaverModifier.MyRole,null);
+                    SetRole(r);
                     window.CloseScreen();
                 }
             }
@@ -108,6 +107,26 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
         }
         MetaScreen SelectRoleScreen;
         List<TrackingArrowAbility> tracking = new List<TrackingArrowAbility>();
+
+        void SetRole(DefinedRole role)
+        {
+            if (MyPlayer.TryGetRole<Pessimist.Instance>(out var instance))
+            {
+                var extendedRoleInstance = role.CreateInstance(MyPlayer, role.DefaultAssignableArguments ?? []);
+                extendedRoleInstance.OnActivated();
+                extendedRoleInstance.Register(this);
+
+                Pessimist.RpcClearMyExtendedRoleInfo.Invoke(instance.MyPlayer);
+
+                instance.MyExtendedRole = role;
+                instance.ExtendedRoleInstance = extendedRoleInstance;
+            }
+            else
+                MyPlayer.SetRole(role, role.DefaultAssignableArguments);
+
+            MyPlayer.AddModifier(DreamweaverModifier.MyRole, null);
+        }
+
         [Local]
         void OnSetRole(PlayerRoleSetEvent ev)
         {
@@ -157,44 +176,8 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
             {
                 return;
             }
-            List<DefinedRole> CanSpawnImpostorRoles = new List<DefinedRole>(Nebula.Roles.Roles.AllRoles.Where(p => p.IsSpawnable&&p.Category == RoleCategory.ImpostorRole));
-            if (CanSpawnImpostorRoles.Contains(Destroyer.MyRole))
-            {
-                CanSpawnImpostorRoles.Remove(Destroyer.MyRole);
-            }
-            if (CanSpawnImpostorRoles.Contains(Nebula.Roles.Impostor.Impostor.MyRole))
-            {
-                CanSpawnImpostorRoles.Remove(Nebula.Roles.Impostor.Impostor.MyRole);
-            }
-            foreach (GamePlayer player in NebulaGameManager.Instance.AllPlayerInfo ?? [])
-            {
-                if (player.IsImpostor)
-                {
-                    if (CanSpawnImpostorRoles.Contains(player.Role.Role))
-                    {
-                        CanSpawnImpostorRoles.Remove(player.Role.Role);
-                    }
-                }
-            }
-            if (CanSelectRole)
-            {
-                if (SelectRoleScreen == null)
-                {
-                    SelectRoleScreen = OpenRoleSelectWindow(true,CanSpawnImpostorRoles, (DefinedRole r) => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole&&!r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), (DefinedRole r) =>
-                    {
-                        MyPlayer.SetRole(r,r.DefaultAssignableArguments);
-                        MyPlayer.AddModifier(DreamweaverModifier.MyRole);
-                        SelectRoleScreen?.CloseScreen();
-                        SelectRoleScreen = null;
-                    });
-                }
-            }
-            else
-            {
-                var r = CanSpawnImpostorRoles[UnityEngine.Random.Range(0, CanSpawnImpostorRoles.Count)];
-                MyPlayer.SetRole(r,r.DefaultAssignableArguments);
-                MyPlayer.AddModifier(DreamweaverModifier.MyRole);
-            }
+
+            this.OpenSelectRoleWindow();
         }
         [Local]
         void OnGameStarted(GameStartEvent ev)
@@ -203,22 +186,21 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
             {
                 return;
             }
-            List<DefinedRole> CanSpawnImpostorRoles = new List<DefinedRole>(Nebula.Roles.Roles.AllRoles.Where(p => p.IsSpawnable && p.Category == RoleCategory.ImpostorRole));
-            if (CanSpawnImpostorRoles.Contains(Destroyer.MyRole))
-            {
-                CanSpawnImpostorRoles.Remove(Destroyer.MyRole);
-            }
-            if (CanSpawnImpostorRoles.Contains(Nebula.Roles.Impostor.Impostor.MyRole))
-            {
-                CanSpawnImpostorRoles.Remove(Nebula.Roles.Impostor.Impostor.MyRole);
-            }
-            foreach (GamePlayer player in NebulaGameManager.Instance.AllPlayerInfo ?? [])
+
+            this.OpenSelectRoleWindow();
+        }
+
+        void OpenSelectRoleWindow()
+        {
+            List<DefinedRole> canSpawn = new List<DefinedRole>(Nebula.Roles.Roles.AllRoles.Where(p => p.CanSpawnInCurrentGame && (p != Destroyer.MyRole && p != Nebula.Roles.Impostor.Impostor.MyRole) && p.Category == RoleCategory.ImpostorRole));
+
+            foreach (GamePlayer player in GamePlayer.AllPlayers)
             {
                 if (player.IsImpostor)
                 {
-                    if (CanSpawnImpostorRoles.Contains(player.Role.Role))
+                    if (canSpawn.Contains(player.Role.Role))
                     {
-                        CanSpawnImpostorRoles.Remove(player.Role.Role);
+                        canSpawn.Remove(player.Role.Role);
                     }
                 }
             }
@@ -226,10 +208,9 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
             {
                 if (SelectRoleScreen == null)
                 {
-                    SelectRoleScreen = OpenRoleSelectWindow(false, CanSpawnImpostorRoles, (DefinedRole r) => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole&&!r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), (DefinedRole r) =>
+                    SelectRoleScreen = OpenRoleSelectWindow(false, canSpawn, (DefinedRole r) => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole && !r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), (DefinedRole r) =>
                     {
-                        MyPlayer.SetRole(r,r.DefaultAssignableArguments);
-                        MyPlayer.AddModifier(DreamweaverModifier.MyRole);
+                        SetRole(r);
                         SelectRoleScreen?.CloseScreen();
                         SelectRoleScreen = null;
                     });
@@ -237,11 +218,11 @@ public class Dreamweaver : DefinedRoleTemplate, DefinedRole, HasCitation, IAssig
             }
             else
             {
-                var r = CanSpawnImpostorRoles[UnityEngine.Random.Range(0, CanSpawnImpostorRoles.Count)];
-                MyPlayer.SetRole(r,r.DefaultAssignableArguments);
-                MyPlayer.AddModifier(DreamweaverModifier.MyRole);
+                var r = canSpawn[UnityEngine.Random.Range(0, canSpawn.Count)];
+                SetRole(r);
             }
         }
+
         [Local]
         private void DecorateNameColor(PlayerDecorateNameEvent ev)
         {
@@ -316,6 +297,7 @@ public class DreamweaverModifier : DefinedModifierTemplate, DefinedModifier, Def
         public Instance(GamePlayer player) : base(player)
         {
         }
+
         List<TrackingArrowAbility> tracking = new List<TrackingArrowAbility>();
         [Local]
         void OnSetRole(PlayerRoleSetEvent ev)
