@@ -308,4 +308,5 @@ public static class AudioLoader
         Buffer.BlockCopy(src, 0, dst, 0, src.Length);
         return dst;
     }
+    #endregion
 }
