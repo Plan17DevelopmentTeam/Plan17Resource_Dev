@@ -15,24 +15,7 @@ public static class AudioLoader
         }
 
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
-        /*switch (ext)
-        {
-            case ".wav":
-            case ".mp3":
-            case ".ogg":
-                try
-                {
-                    return await System.Threading.Tasks.Task.Run(()=>LoadAudioWithImmersionAudio(filePath));
-                }
-                catch (Exception e)
-                {
-                    PDebug.Log(e);
-                    return null;
-                }
-            default:
-                PDebug.Log($"[AudioLoader] Unsupported extension: {ext}");
-                return null;
-        }*/
+
         switch (ext)
         {
             case ".wav":
@@ -324,19 +307,5 @@ public static class AudioLoader
         var dst = new float[src.Length / 4];
         Buffer.BlockCopy(src, 0, dst, 0, src.Length);
         return dst;
-    }
-
-    #endregion
-    private static AudioClip LoadAudioWithImmersionAudio(string path)
-    {
-        int[] info = new int[4];
-        var samples=ImmersionAudioBridge.AudioBridgeService.DecodeToPcm(path,info);
-        var name = Path.GetFileNameWithoutExtension(path);
-        var channels = info[0];
-        var frames = info[2];
-        var sampleRate = info[1];
-        var clip = AudioClip.Create(name, frames, channels, sampleRate, false);
-        clip.SetData(samples, 0);
-        return clip;
     }
 }
