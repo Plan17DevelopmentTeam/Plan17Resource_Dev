@@ -85,11 +85,7 @@ public class Tunny : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
         {
             try
             {
-                if (MyPlayer.VanillaPlayer == null)
-                {
-                    return;
-                }
-                if (MyPlayer != null && !MyPlayer.IsDead && MyPlayer.CanMove && AmOwner && !MeetingHud.Instance.AsBoolFast())
+                if (!MyPlayer.IsDead && MyPlayer.CanMove && AmOwner && !MeetingHud.Instance.AsBoolFast())
                 {
                     float lefttime = stoptime - stopmovetime;
                     if (lastPosition == MyPlayer.TruePosition)

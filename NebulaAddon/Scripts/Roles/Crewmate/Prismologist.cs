@@ -7,12 +7,12 @@ namespace Plana.Roles.Crewmate;
 
 public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Ability>, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
-    private const float extendLen=100f;
-    private const float alpha=0.2f;
-    private const int usesPerRound = 2;
-    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound]) { }
+    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound])
+    {
+        ConfigurationHolder?.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png")?.AsImage(115f);
+    }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
-    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismologist.PNG")!.AsImage();
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismologist.png")!.AsImage();
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CannotLoad;
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new Ability(player);
     public static readonly FloatConfiguration PrismCooldown = NebulaAPI.Configurations.Configuration("options.role.prismologist.prismCooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
@@ -27,8 +27,13 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
 
     public class Ability : AbstractPlayerAbility, IPlayerAbility
     {
-        public static Image PlaceIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialPrismButton.PNG" : "PrismButton.png")!.AsImage(115f)!;
-        int leftUses=usesPerRound;
+        private const float extendLen = 100f;
+        private const float alpha = 0.2f;
+        private const int usesPerRound = 2;
+
+        public static Image PlaceIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialPrismButton.png" : "PrismButton.png")!.AsImage(115f)!;
+
+        int leftUses = usesPerRound;
         int firstPrism;
         List<int> prisms = new();
         Vector2 prismPointA, prismB;

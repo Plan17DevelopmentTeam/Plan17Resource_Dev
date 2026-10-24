@@ -10,9 +10,9 @@ namespace Plana.Core;
 public class Prism : NebulaSyncStandardObject
 {
     static public readonly bool special = (DateTime.Now.Month == 10 && DateTime.Now.Day >= 20) || (DateTime.Now.Month == 11 && DateTime.Now.Day <= 20);
-    static Image PrismImage = NebulaAPI.AddonAsset.GetResource(special ? "SpecialPrism.PNG" : "Prism.PNG")!.AsImage(115f)!;
-    static MultiImage SpawnImage = NebulaAPI.AddonAsset.GetResource("PrismSpwanAnim.PNG")!.AsMultiImage(5, 2, 100f)!;
-    static MultiImage SpawnChargeImage = NebulaAPI.AddonAsset.GetResource("PrismSpawnChargeAnim.PNG")!.AsMultiImage(5, 1, 100f)!;
+    static Image PrismImage = NebulaAPI.AddonAsset.GetResource(special ? "SpecialPrism.png" : "Prism.png")!.AsImage(115f)!;
+    static MultiImage SpawnImage = NebulaAPI.AddonAsset.GetResource("PrismSpwanAnim.png")!.AsMultiImage(5, 2, 100f)!;
+    static MultiImage SpawnChargeImage = NebulaAPI.AddonAsset.GetResource("PrismSpawnChargeAnim.png")!.AsMultiImage(5, 1, 100f)!;
     public const float extendLen = 100f;
     public const string MyTag = "Prism";
     PrismString? mirror;
@@ -68,8 +68,8 @@ public class Prism : NebulaSyncStandardObject
 
     public class PrismString : IGameOperator
     {
-        static readonly Image laserNodeImage = NebulaAPI.AddonAsset.GetResource("PrismNodeBack.PNG")!.AsImage(100f)!;
-        static readonly Image laserNodeBackImage = NebulaAPI.AddonAsset.GetResource("PrismNodeBack.PNG")!.AsImage(100f)!;
+        static readonly Image laserNodeImage = NebulaAPI.AddonAsset.GetResource("PrismNodeBack.png")!.AsImage(100f)!;
+        static readonly Image laserNodeBackImage = NebulaAPI.AddonAsset.GetResource("PrismNodeBack.png")!.AsImage(100f)!;
         static readonly MultiImage laserImage = NebulaAPI.AddonAsset.GetResource("PrismLaserBack.png")!.AsMultiImage(1, 4, 100f)!;
         static readonly MultiImage laserBackImage = NebulaAPI.AddonAsset.GetResource("PrismLaserBack.png")!.AsMultiImage(1, 4, 100f)!;
 

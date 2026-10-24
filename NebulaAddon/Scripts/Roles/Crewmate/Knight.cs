@@ -1,8 +1,4 @@
-﻿using Plana.Core;
-using Plana.Roles.Modifier;
-using static UnityEngine.GraphicsBuffer;
-
-namespace Plana.Roles.Crewmate;
+﻿namespace Plana.Roles.Crewmate;
 
 public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
@@ -62,7 +58,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                             {
                                 if (lockSprite != null && DestroyableSingleton<HudManager>.InstanceExists && DestroyableSingleton<HudManager>.Instance.ReportButton.canInteract)
                                 {
-                                    (killButton as ModAbilityButtonImpl).PlayFlashOnce();
+                                    (killButton as ModAbilityButtonImpl)?.PlayFlashOnce();
                                     UnityEngine.Object.Destroy(lockSprite.gameObject);
                                     lockSprite = null;
                                 }
@@ -77,27 +73,29 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                 killButton.OnClick = button=>
                 {
                     var target = killTracker.CurrentTarget;
-                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                    if (target == null) return;
+
+                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
-                        MyPlayer.MurderPlayer(killTracker.CurrentTarget, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>
+                        MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>
                         {
                             if (result == KillResult.Kill)
                             {
                                 new StaticAchievementToken("knight.common1");
-                                if (killTracker.CurrentTarget.Role.Role.Category != RoleCategory.CrewmateRole)
+                                if (target.Role.Role.Category != RoleCategory.CrewmateRole)
                                 {
                                     new StaticAchievementToken("knight.common2");
                                 }
-                                if (killTracker.CurrentTarget.Role is Sheriff.Ability)
+                                if (target.Role is Sheriff.Ability)
                                 {
                                     new StaticAchievementToken("knight.another1");
                                 }
-                                if (killTracker.CurrentTarget.Role is Mayor.Ability)
+                                if (target.Role is Mayor.Ability)
                                 {
                                     new StaticAchievementToken("knight.another2");
                                 }
-                                if (killTracker.CurrentTarget.Role is Sidekick.Instance || killTracker.CurrentTarget.Modifiers.Any((RuntimeModifier m) => m is SidekickModifier))
+                                if (target.Role is Sidekick.Instance || target.Modifiers.Any((RuntimeModifier m) => m is SidekickModifier))
                                 {
                                     new StaticAchievementToken("knight.challenge1");
                                 }
@@ -111,7 +109,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                 killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KILLCooldownOption).SetAsKillCoolTimer().Start(null);
                 killButton.StartCoolDown();
                 killButton.SetLabel("kill");
-                (killButton as ModAbilityButtonImpl)!.OnMeeting = (button) =>
+                killButton.OnMeeting = (button) =>
                 {
                     if (lockSprite!=null)
                     {

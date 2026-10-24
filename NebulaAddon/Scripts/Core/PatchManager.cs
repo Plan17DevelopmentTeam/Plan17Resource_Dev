@@ -9786,8 +9786,10 @@ public class PatchManager
             byte[] utf8Bytes = Convert.FromBase64String(base64);
             return Encoding.UTF8.GetString(utf8Bytes);
         }
+
         public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
         {
+            yield return preprocessor;
         }
 
         [HarmonyPatch(typeof(Language),nameof(Language.TryGetText)),HarmonyPrefix]

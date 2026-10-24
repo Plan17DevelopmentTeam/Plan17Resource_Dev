@@ -1,0 +1,22 @@
+"UpdateOptionMessage" : " set to "
+"BoolOption0" : "<color=#D13438>Off</color>"
+"BoolOption1" : "<color=#8CFFFF>On</color>"
+
+"config.client.useairshipSound" : "Force The Airship SE"
+"config.client.darktheme" : "Dark Theme"
+"config.client.ggdGuesserSound" : "GGD Meeting Kill SE"
+"config.client.mapuseRoleColor" : "Maps Use Role's Color"
+"config.client.alluiUseModern" : "Use New UI"
+"config.client.loadingAnim" : "Loading Animation"
+"config.client.blockStamps" : "Disable Emoticons"
+"config.client.blockStamps.detail" : "Emoticons sent by players will no longer be received."
+
+"general.marksystemTips" : "Right-click to use tags"
+
+"options.general.modtrackerDistance" : "持续使用型技能交互距离"
+"options.general.modtrackerDistance.detail" : "本选项仅为纵火犯，占卜师（预言家），鉴酒师应用。"
+"options.general.modtrackerDistance.short" : "short"
+"options.general.modtrackerDistance.mid" : "中"
+"options.general.modtrackerDistance.long" : "long"
+"options.general.hidelevel" : "Hide Player Level"
+"options.general.hidelevel.detail" : "开启后游戏内玩家等级将显示为???"

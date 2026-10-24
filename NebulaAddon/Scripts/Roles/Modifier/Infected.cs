@@ -282,9 +282,9 @@ public class Infected : DefinedModifierTemplate, DefinedAllocatableModifier, Has
                 AmongUsUtil.PlayCustomFlash(MyRole.RoleColor, 0f, 0.8f, 0.7f, 0f);
                 if (InfectedSetRoleImmediately)
                 {
-                    SelectRoleScreen = OpenRoleSelectWindow(false, (DefinedRole r) => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole&&!r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), (DefinedRole r) =>
+                    SelectRoleScreen = OpenRoleSelectWindow(false, r => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole&&!r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), r =>
                     {
-                        Selected = null;
+                        Selected = true;
                         MyPlayer.SetRole(r,r.DefaultAssignableArguments);
                         SelectRoleScreen?.CloseScreen();
                         SelectRoleScreen = null;

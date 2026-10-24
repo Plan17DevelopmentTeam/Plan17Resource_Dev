@@ -1,0 +1,477 @@
+"achievement.lovemesseger.common1.title" : "Love Magic"
+"achievement.lovemesseger.common1.goal" : "Send love to a player"
+"achievement.lovemesseger.common1.cond" : "Constraint:Send love to a player without suicide."
+"achievement.lovemesseger.common1.splitted.0" : "Magical"
+
+"achievement.lovemesseger.another1.title" : "Surprise!...Wait a minute?"
+"achievement.lovemesseger.another1.goal" : "Eject kind jester"
+"achievement.lovemesseger.another1.cond" : "Constraint:Send love to a jester and eject them."
+
+"achievement.lovemesseger.another2.title" :  "Whoops...They are monsters..."
+"achievement.lovemesseger.another2.goal" :  "Send love to teams that cannot be loved"
+"achievement.lovemesseger.another2.cond" : ""
+"achievement.lovemesseger.another2.flavor" : ""There ain't anyone else..." -A soft sigh"
+"achievement.lovemesseger.another2.splitted.1" : "Lamenting"
+
+"achievement.lovemesseger.another3.title" : "Smell of being in love?"
+"achievement.lovemesseger.another3.goal" :  "Send love to a scarlet"
+"achievement.lovemesseger.another3.cond" : "Constraint:Send love to a scarlet but finally scarlet win."
+
+"achievement.lovemesseger.challenge1.title" : "Good puppy!"
+"achievement.lovemesseger.challenge1.goal" : "Send love to a jackal"
+"achievement.lovemesseger.challenge1.cond" : "Constraint:Send love to a jackal-The magic of being kind!"
+"achievement.lovemesseger.challenge1.flavor" : ""-The magic of being kind!""
+"achievement.lovemesseger.challenge1.splitted.2" : "Magic Maiden"
+
+"achievement.lovemesseger.challenge2.title" : "We need peace"
+"achievement.lovemesseger.challenge2.goal" : "Victory by sending love when less than five players."
+"achievement.lovemesseger.challenge2.cond" : "Constraint:Send love to a jackal when less than five players and finally crewmates win"
+"achievement.lovemesseger.challenge2.splitted.1" : "Smiling"
+
+"achievement.knight.common1.title" : "I am justice"
+"achievement.knight.common1.goal" : "Use kill"
+"achievement.knight.common1.cond" : ""
+"achievement.knight.common1.splitted.0" : "Executing"
+
+"achievement.knight.common2.title" : "A whiff of conspiracy"
+"achievement.knight.common2.goal" : "Kill evils"
+"achievement.knight.common2.cond" : "Constraint:Kill a neutral or an impostor"
+
+"achievement.knight.another1.title" : "The conflict begins..."
+"achievement.knight.another1.goal" : "Kill a sheriff"
+"achievement.knight.another1.cond" : ""
+"achievement.knight.another1.splitted.0" : "Hypocritical"
+
+"achievement.knight.another2.title" : "I need a spotlight"
+"achievement.knight.another2.goal" : "Kill a mayor"
+"achievement.knight.another2.cond" : ""
+
+"achievement.knight.challenge1.title" : "Chop their roots, stop their growth"
+"achievement.knight.challenge1.goal" : "Kill a sidekick"
+"achievement.knight.challenge1.cond" : ""
+
+"achievement.speechEater.common1.title" : "I hate noise"
+"achievement.speechEater.common1.goal" : "Blackmail a player"
+"achievement.speechEater.common1.cond" : ""
+"achievement.speechEater.common1.splitted.0" : "Noisy"
+
+"achievement.speechEater.common2.title" : "Loose lips sink ships"
+"achievement.speechEater.common2.goal" : "Blackmail a teammate"
+"achievement.speechEater.common2.cond" : ""
+
+"achievement.speechEater.another1.title" : "In a fluster"
+"achievement.speechEater.another1.goal" : "Suicide by misguessing while blackmailing a player"
+"achievement.speechEater.another1.cond" : ""
+"achievement.speechEater.another2.title" : "A little bit overwhelmed..."
+"achievement.speechEater.another2.goal" : "Suicide by misguessing while blackmailing a player"
+"achievement.speechEater.another2.cond" : ""
+
+"achievement.speechEater.challenge1.title" : "Keep quiet forever"
+"achievement.speechEater.challenge1.goal" :  "Kill the blackmailed player by guessing in a meeting"
+"achievement.speechEater.challenge1.cond" : ""
+"achievement.speechEater.challenge1.flavor" : "You will keep this secret,right?"
+"achievement.speechEater.challenge1.splitted.0" : "Non-secret"
+
+"achievement.seluch.another1.title" : "Seems like killed a good person"
+"achievement.seluch.another1.goal" : "Report the body of busker"
+"achievement.seluch.another1.cond" : ""
+"achievement.seluch.another1.splitted.2" : "you"
+
+"achievement.seluch.another2.title" : "Good news from the underworld!"
+"achievement.seluch.another2.goal" : "Report the body of bait"
+"achievement.seluch.another2.cond" : ""
+
+"achievement.doomsayer.common1.title" : "Apocalypse has arrived"
+"achievement.doomsayer.common1.goal" : "Win as a doomguesser"
+"achievement.doomsayer.common1.cond" : ""
+"achievement.doomsayer.common1.splitted.1" : "Disastrous"
+
+"achievement.doomsayer.challenge1.title" : "Cash'n Guns♪"
+"achievement.doomsayer.challenge1.goal" : "Correctly guess three impostors then win"
+"achievement.doomsayer.challenge1.cond" : ""
+"achievement.doomsayer.challenge1.splitted.1" : "Achieving"
+
+"achievement.doomsayer.another1.title" : "I can't stand you"
+"achievement.doomsayer.another1.goal" : "Misguess a certain player's role twice in two meetings"
+"achievement.doomsayer.another1.cond" : ""
+"achievement.doomsayer.another1.splitted.1" : "Objectionable"
+
+"achievement.justicePlus.common1.title" : "Listen to me!"
+"achievement.justicePlus.common1.goal" : "Call a judgement meeting"
+"achievement.justicePlus.common1.cond" : ""
+
+"achievement.justicePlus.challenge1.title" : "Judge your guilty"
+"achievement.justicePlus.challenge1.goal" : "Four non-crewmate players are selected in the judgement meeting,  then eject two if them"
+"achievement.justicePlus.challenge1.cond" : ""
+
+"achievement.justicePlus.another1.title" : "I really want to punish them"
+"achievement.justicePlus.another1.goal" : "Eject a player by selecting them singly in the first meeting"
+"achievement.justicePlus.another1.cond" : ""
+"achievement.justicePlus.another1.splitted.1" : "Your"
+
+"achievement.justicePlus.another2.title" : "The judgment has deviated"
+"achievement.justicePlus.another2.goal" : "Select four playersand call a judgement meeting that three impostors are among them, but the ejected player is not an impostor."
+"achievement.justicePlus.another2.cond" : ""
+"achievement.justicePlus.another2.splitted.1" : "Abnormal"
+
+"achievement.swapper.common1.title" : "Cheer for me"
+"achievement.swapper.common1.goal" : "Swap a crewmate's votes to an impostor then the impostor is ejected"
+"achievement.swapper.common1.cond" : ""
+
+"achievement.swapper.another1.title" : "A opposite future"
+"achievement.swapper.another1.goal" : "Swap votes but you are ejected"
+"achievement.swapper.another1.cond" : ""
+"achievement.swapper.another1.splitted.2" : "Non-Future"
+
+"achievement.swapper.another2.title" : "Oh my god!"
+"achievement.swapper.another2.goal" : "Get the jester ejected after swapping the votes of the jester and an impostor"
+"achievement.swapper.another2.cond" : ""
+"achievement.swapper.another2.flavor" : "Messed up!"
+
+"achievement.knighted.common1.title" : "Offering my loyalty"
+"achievement.knighted.common1.goal" : "Use loyal once"
+"achievement.knighted.common1.cond" : ""
+"achievement.knighted.common1.splitted.0" : "Offering"
+
+"achievement.knighted.common2.title" : "Follow in your footsteps"
+"achievement.knighted.common2.goal" : "Win after killing a crewmate with an impostor master"
+"achievement.knighted.common2.cond" : ""
+
+"achievement.knighted.common3.title" : "Love Defense Officer"
+"achievement.knighted.common3.goal" : "Win with a lover master"
+"achievement.knighted.common3.cond" : ""
+
+"achievement.knighted.common4.title" : "Long term loneliness"
+"achievement.knighted.common4.goal" : "Win alive when the master died in the first two rounds"
+"achievement.knighted.common4.cond" : ""
+"achievement.knighted.common4.splitted.0" : "Guardian"
+
+"achievement.knighted.challenge1.title" : "I will follow you for a long, long time"
+"achievement.knighted.challenge1.goal" : "Win with a neutral master"
+"achievement.knighted.challenge1.cond" : ""
+"achievement.knighted.challenge1.splitted.2" : "Resonance"
+
+"achievement.knighted.another1.title" : "This is one of the plans"
+"achievement.knighted.another1.goal" : "Win with the master after killing it"
+"achievement.knighted.another1.cond" : ""
+"achievement.knighted.another1.splitted.2" : "In plan"
+
+"achievement.soulrefiner.common1.title" : "Final Destination"
+"achievement.soulrefiner.common1.goal" : "Use SRF to kill 1 player"
+"achievement.soulrefiner.common1.cond" : ""
+"achievement.soulrefiner.common1.splitted.0" : "Reaping"
+
+"achievement.soulrefiner.common2.title" :"Don't think about leaving"
+"achievement.soulrefiner.common2.goal" :  "Use SRF to kill 2 or more players in a single game"
+"achievement.soulrefiner.common2.cond" : ""
+
+"achievement.soulrefiner.challenge1.title" :"Getting stronger and stronger"
+"achievement.soulrefiner.challenge1.goal" :  "Kill 5 players in a single game"
+"achievement.soulrefiner.challenge1.cond" : ""
+
+"achievement.soulrefiner.another1.title" : "I am the only one, the strong do not need companions"
+"achievement.soulrefiner.another1.goal" : "Use SRF to kill 2 or more non-crewmate players in a single game"
+"achievement.soulrefiner.another1.cond" : ""
+
+"achievement.sommelier.common1.title" : "Tipsy"
+"achievement.sommelier.common1.goal" : "Pass the wine once"
+"achievement.sommelier.common1.cond" : ""
+
+"achievement.sommelier.common2.title" : "Anyone drunk?"
+"achievement.sommelier.common2.goal" : "Reveal once"
+"achievement.sommelier.common2.cond" : ""
+
+"achievement.sommelier.challenge1.title" : "A distant poem, an intimate wine"
+"achievement.sommelier.challenge1.goal" : "Win with crewmate after revealing 2 times"
+"achievement.sommelier.challenge1.cond" : ""
+"achievement.sommelier.challenge1.splitted.2" : "Distance"
+
+"achievement.sommelier.another1.title" : "Way too casual"
+"achievement.sommelier.another1.goal" : " Ejected after passing wine to mini crewmate"
+"achievement.sommelier.another1.cond" : ""
+"achievement.sommelier.another1.splitted.1" : "Random"
+
+"achievement.nicesplicer.common1.title" : "Space distortion"
+"achievement.nicesplicer.common1.goal" : "Teleport once"
+"achievement.nicesplicer.common1.cond" : ""
+
+"achievement.nicesplicer.common2.title" : "The busy one"
+"achievement.nicesplicer.common2.goal" : "Teleport 10 times in the same game"
+"achievement.nicesplicer.common2.cond" : ""
+
+"achievement.nicesplicer.another1.title" : "Panicking power"
+"achievement.nicesplicer.another1.goal" : "Exiled after teleportation"
+"achievement.nicesplicer.another1.cond" : ""
+
+"achievement.nicesplicer.challenge1.title" : "Gotcha!"
+"achievement.nicesplicer.challenge1.goal" : "Teleport to witness a murder"
+"achievement.nicesplicer.challenge1.cond" : ""
+
+"achievement.evilsplicer.common1.title" : "Time rift"
+"achievement.evilsplicer.common1.goal" : "Execute once"
+"achievement.evilsplicer.common1.cond" : ""
+
+"achievement.evilsplicer.challenge1.title" : "Can't stop myself"
+"achievement.evilsplicer.challenge1.goal" : "Execute 3 players in 1 round"
+"achievement.evilsplicer.challenge1.cond" : ""
+
+"achievement.insomniacs.common1.title" : "TRY SLEEP NOW...?"
+"achievement.insomniacs.common1.goal" : "Use dreaming once"
+"achievement.insomniacs.common1.cond" : ""
+"achievement.insomniacs.common1.splitted.0" : "Dreaming"
+
+"achievement.insomniacs.another1.title" : "The wind of freedom"
+"achievement.insomniacs.another1.goal" : "Use dreaming on a neutral player"
+"achievement.insomniacs.another1.cond" : ""
+
+"achievement.insomniacs.another2.title" : "Why are you crying?"
+"achievement.insomniacs.another2.goal" : "Use dreaming on a crewmate player"
+"achievement.insomniacs.another2.cond" : ""
+
+"achievement.insomniacs.another3.title" : "The eternal dream"
+"achievement.insomniacs.another3.goal" : "Killed by the dreamweaver"
+"achievement.insomniacs.another3.cond" : ""
+"achievement.insomniacs.another3.splitted.0" : "Naccessible"
+
+"achievement.insomniacs.another4.title" : "Forced to sleep"
+"achievement.insomniacs.another4.goal" : "Killed by an impostor"
+"achievement.insomniacs.another4.cond" : ""
+"achievement.insomniacs.another4.splitted.0" : "Eternally Sleeping"
+
+"achievement.insomniacs.another5.title" : "A wonderful experience"
+"achievement.insomniacs.another5.goal" : "Wake from the dream in 1 round"
+"achievement.insomniacs.another5.flavor" : ""It seems I had a nightmare. Maybe.""
+"achievement.insomniacs.another5.cond" : ""
+
+"achievement.insomniacs.another6.title" : "Something's salty"
+"achievement.insomniacs.another6.goal" : "Use dreaming on an impostor player"
+"achievement.insomniacs.another6.cond" : ""
+
+"achievement.insomniacs.challenge1.title" : "No need to wake"
+"achievement.insomniacs.challenge1.goal" : "Win with impostors with your dreaming character"
+"achievement.insomniacs.challenge1.cond" : ""
+"achievement.insomniacs.challenge1.splitted.0" : "Dreamless"
+
+"achievement.insomniacs.challenge2.title" : "Interweaving delusions with the pitch black dream"
+"achievement.insomniacs.challenge2.goal" : "Win with the impostor after using dreaming on the dreamweaver"
+"achievement.insomniacs.challenge2.cond" : ""
+"achievement.insomniacs.challenge2.flavor" : "‘I weave the dream for myself’-from somewhere"
+"achievement.insomniacs.challenge2.splitted.1" : "Interwoven Dreams"
+
+"achievement.yandere.common1.title" : "Enviness distorts my mind"
+"achievement.yandere.common1.goal" : "Kill a rival"
+"achievement.yandere.common1.cond" : ""
+"achievement.yandere.common1.splitted.0" : "Distorted"
+
+"achievement.yandere.another1.title" : "I've just said, we're the ideal pair!"
+"achievement.yandere.another1.goal" : "Win with the darling in the same team"
+"achievement.yandere.another1.cond" : "Win with the darling through jackal team or crewmate team"
+"achievement.yandere.another1.splitted.1" : "Ideal"
+
+"achievement.yandere.another2.title" : "Who did it!?"
+"achievement.yandere.another2.goal" : "Kill no less than 5 players and win while the darling is dead, but have not killed the darling's murderer"
+"achievement.yandere.another2.cond" : ""
+"achievement.yandere.another2.splitted.1" : "Void"
+
+"achievement.yandere.another3.title" : "Sole solicitude"
+"achievement.yandere.another3.goal" : "Win when the darling died in the first round"
+"achievement.yandere.another3.cond" : ""
+"achievement.yandere.another3.splitted.0" : "Sole"
+"achievement.yandere.challenge1.title" : "Rival? Just a nonexistence!"
+"achievement.yandere.challenge1.goal" : "Kill no less than 5 players and win"
+"achievement.yandere.challenge1.cond" : ""
+"achievement.yandere.challenge1.splitted.2" : "Nonexistence"
+
+"achievement.yandere.challenge2.title" : "Love should be represented by actions"
+"achievement.yandere.challenge2.goal" : "Win the game"
+"achievement.yandere.challenge2.cond" : ""
+"achievement.yandere.challenge2.splitted.2" : "Love"
+
+"achievement.yandere.challenge3.title" : "My heart's only yours"
+"achievement.yandere.challenge3.goal" : "Win with the darling through yandere's winning condition"
+"achievement.yandere.challenge3.cond" : ""
+"achievement.yandere.challenge3.splitted.1" : "Only"
+
+"achievement.tunny.common1.title" : "Cannt fish"
+"achievement.tunny.common1.goal" : "Suffocate in the first round"
+"achievement.tunny.common1.cond" : ""
+
+"achievement.tunny.common2.title" : "Annoying smell"
+"achievement.tunny.common2.goal" : "Die but not due to suffocate"
+"achievement.tunny.common2.cond" : ""
+
+"achievement.tunny.another1.title" : "Rumbling"
+"achievement.tunny.another1.goal" : "Killed by a bubble"
+"achievement.tunny.another1.cond" : ""
+"achievement.tunny.another1.splitted.2" : "Bubbled"
+
+"achievement.tunny.challenge1.title" : "The vast ocean"
+"achievement.tunny.challenge1.goal" : "Win as the tuna"
+"achievement.tunny.challenge1.cond" : ""
+
+"achievement.lawyer.another1.title" : "Job-hopping"
+"achievement.lawyer.another1.goal" : "Vote your target"
+"achievement.lawyer.another1.cond" : ""
+"achievement.lawyer.another1.splitted.2" : "Woodshedder"
+
+"achievement.lawyer.another2.title" : "I am so done with this"
+"achievement.lawyer.another2.goal" : "Kill your target after being recruited by jackal and win"
+"achievement.lawyer.another2.cond" : ""
+"achievement.lawyer.another2.splitted.1" : "Leaving"
+
+"achievement.lawyer.another3.title" : "Animal protection law"
+"achievement.lawyer.another3.goal" : "Win with only a jackal target and fish."
+"achievement.lawyer.another3.cond" : ""
+"achievement.lawyer.another3.splitted.2" : "Protection Laws"
+
+"achievement.lawyer.challenge1.title" : "Perfect debation"
+"achievement.lawyer.challenge1.goal" : "Survive with your target at the end of the game and win"
+"achievement.lawyer.challenge1.cond" : ""
+
+"achievement.lawyer.challenge2.title" : "It is important to have an excellent companion"
+"achievement.lawyer.challenge2.goal" : "Win with your target while dying at the first round"
+"achievement.lawyer.challenge2.cond" : ""
+"achievement.lawyer.challenge2.splitted.1" : "Excellent"
+
+"achievement.pursuer.common1.title" : "Peace ambassador"
+"achievement.pursuer.common1.goal" : "Use blank once"
+"achievement.pursuer.common1.cond" : ""
+
+"achievement.pursuer.challenge1.title" : "Please be gentle and don't fight"
+"achievement.pursuer.challenge1.goal" : "Win with all blanks used"
+"achievement.pursuer.challenge1.cond" : ""
+
+"achievement.pursuer.challenge2.title" : "Work until the end"
+"achievement.pursuer.challenge2.goal" : "Win with the target."
+"achievement.pursuer.challenge2.cond" : ""
+
+"achievement.evilAce.common1.title" : "First-hand secret"
+"achievement.evilAce.common1.goal" : "Guess successfully after killing at least 3 players."
+"achievement.evilAce.common1.cond" : ""
+
+"achievement.evilAce.challenge1.title" : "Perfect action"
+"achievement.evilAce.challenge1.goal" : "Kill at least 5 players and win."
+"achievement.evilAce.challenge1.cond" : ""
+"achievement.evilAce.challenge1.splitted.0" : "Acting"
+
+"achievement.evilAce.challenge2.title" : "KING 'K'ill is for the 'K'ing"
+"achievement.evilAce.challenge2.goal" : "Kill at least 5 players."
+"achievement.evilAce.challenge2.cond" : ""
+"achievement.evilAce.challenge2.splitted.2" : "KING"
+
+"achievement.crawlerengineer.common1.title" : "Subtle information"
+"achievement.crawlerengineer.common1.goal" : "Use the special map once."
+"achievement.crawlerengineer.common1.cond" : ""
+"achievement.crawlerengineer.common1.splitted.2" : "Omniscience"
+
+"achievement.crawlerengineer.challenge1.title" : "Things are getting clearer"
+"achievement.crawlerengineer.challenge1.goal" : "Guess successfully on the meeting right after using the special map."
+"achievement.crawlerengineer.challenge1.cond" : ""
+
+"achievement.crawlerengineer.another1.title" : "Deviation to the plan"
+"achievement.crawlerengineer.another1.goal" : "Get ejected after killing 1 player."
+"achievement.crawlerengineer.another1.cond" : ""
+"achievement.crawlerengineer.another1.splitted.0" : "Abnormal"
+
+"achievement.crawlerengineer.common2.title" : "Nothing needs to be said"
+"achievement.crawlerengineer.common2.goal" : Other impostors correctly guessed the role of the Crawler engineer who was marked."
+"achievement.crawlerengineer.common2.cond" : ""
+"achievement.crawlerengineer.common2.splitted.2" : "Nothing"
+
+"achievement.crawlerengineer.challenge2.title" : "Fu11 C0mb0！"
+"achievement.crawlerengineer.challenge2.goal" : "When Crawler engineer was present, the impostors team guessed six or more roles."
+"achievement.crawlerengineer.challenge2.cond" : ""
+"achievement.crawlerengineer.challenge2.flavor" : "”Full Combo！” -There seemed to be a mocking laughter coming from behind."
+"achievement.crawlerengineer.challenge2.splitted.1" : "Rhythm sensation"
+
+"achievement.shifter.common1.title" : "This looks nice"
+"achievement.shifter.common1.goal" : "Successfully swap character once."
+"achievement.shifter.common1.cond" : ""
+
+"achievement.shifter.challenge1.title" : "I'm more fit to this job!"
+"achievement.shifter.challenge1.goal" : "Make a successful kill after swapping the sheriff."
+"achievement.shifter.challenge1.cond" : ""
+
+"achievement.shifter.another1.title" : "That's not funny"
+"achievement.shifter.another1.goal" : "Suicide due to a failed swap."
+"achievement.shifter.another1.cond" : ""
+
+"achievement.holmes.common1.title" : "New to investigation"
+"achievement.holmes.common1.goal" : "Investigate and learn one player's role."
+"achievement.holmes.common1.cond" : ""
+
+"achievement.holmes.common2.title" : "Revealer of the truth"
+"achievement.holmes.common2.goal" : "Learn an impostor or neutral role through investigation and make them ejected."
+"achievement.holmes.common2.cond" : ""
+
+
+"achievement.holmes.challenge1.title" : "The cautious detective"
+"achievement.holmes.challenge1.goal" : "Survive until the end of game as Holmes."
+"achievement.holmes.challenge1.cond" : ""
+
+"achievement.holmes.another1.title" : "Fogged clue"
+"achievement.holmes.another1.goal" : "Killed by moran after investigated a moriaty team member."
+"achievement.holmes.another1.cond" : ""
+
+"achievement.moriarty.common1.title" : "Controller in the shadow"
+"achievement.moriarty.common1.goal" : "Convert a player to moran"
+"achievement.moriarty.common1.cond" : ""
+"achievement.moriarty.common1.splitted.0" : "Shadowy"
+
+"achievement.moriarty.common2.title" : "Calculating criminalist"
+"achievement.moriarty.common2.goal" : "Kill Holmes"
+"achievement.moriarty.common2.cond" : ""
+"achievement.moriarty.common2.splitted.0" : "Calculating"
+
+"achievement.moriarty.challenge1.title" : "Supervillain"
+"achievement.moriarty.challenge1.goal" : "Kill Holmes when moran is dead."
+"achievement.moriarty.challenge1.cond" : ""
+"achievement.moriarty.challenge1.splitted.2" : "Supervillain"
+
+"achievement.moriarty.another1.title" : "Good start......?"
+"achievement.moriarty.another1.goal" : "Convert Holmes to moran."
+"achievement.moriarty.another1.cond" : ""
+
+"achievement.moran.common1.title" : "Target locked"
+"achievement.moran.common1.goal" : "Snipe a player."
+"achievement.moran.common1.cond" : ""
+"achievement.moran.common1.splitted.0" : "Locked"
+
+"achievement.moran.common2.title" : "The long wait"
+"achievement.moran.common2.goal" : "Snipe Holmes."
+"achievement.moran.common2.cond" : ""
+
+"achievement.moran.challenge1.title" : "Killer in the mist"
+"achievement.moran.challenge1.goal" : "Snipe Holmes after being investigated."
+"achievement.moran.challenge1.cond" : ""
+"achievement.moran.challenge1.splitted.0" : "Misty"
+
+"achievement.moran.another1.title" : "The phantom sniper"
+"achievement.moran.another1.goal" : "Kill holmes when invisible."
+"achievement.moran.another1.cond" : ""
+"achievement.moran.another1.splitted.2" : "Phantom"
+
+"achievement.crow.common1.title" : "Crow companion"
+"achievement.crow.common1.goal" : "Envelop once"
+"achievement.crow.common1.cond" : ""
+"achievement.crow.common1.splitted.2" : "Companion"
+
+"achievement.crow.common2.title" : "Techniques are required"
+"achievement.crow.common2.goal" : "Kill someone immediately after transmit."
+"achievement.crow.common2.cond" : ""
+"achievement.crow.common2.splitted.0" : "Need"
+
+"achievement.dreamweaver.another1.title" : "Quit from treatment"
+"achievement.dreamweaver.another1.goal" : "Kill the insomniac."
+"achievement.dreamweaver.another1.cond" : ""
+"achievement.dreamweaver.another1.splitted.0" : "Hopeless"
+
+"achievement.dreamweaver.challenge1.title" : "Dream World"
+"achievement.dreamweaver.challenge1.goal" : "Win as the final living impostor with the dreaming player alive."
+"achievement.dreamweaver.challenge1.cond" : ""
+"achievement.dreamweaver.challenge1.splitted.2" : "World"
+
+"achievement.ferryman.common1.title" : "Bring you to the doctor"
+"achievement.ferryman.common1.goal" : "Drag a body."
+"achievement.ferryman.common1.cond" : ""
+

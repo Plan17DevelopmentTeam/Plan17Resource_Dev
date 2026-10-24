@@ -118,7 +118,7 @@ public class PMini : DefinedAllocatableModifierTemplate, HasCitation, DefinedAll
                 }
             }
         }
-        void OnKill(PlayerTryVanillaKillLocalEventAbstractPlayerEvent ev)
+        void OnKill(PlayerTryVanillaKillLocalEvent ev)
         {
             if (ev.Target.RealPlayer.PlayerId == MyPlayer.PlayerId)
             {

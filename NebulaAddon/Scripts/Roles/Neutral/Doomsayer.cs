@@ -116,13 +116,12 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
             resultList.Insert(UnityEngine.Random.Range(0, list.Count), playerRole);
             return resultList;
         }
-        public static RemoteProcess<(byte MyPlayerID, byte oracleTargetId, DefinedRole[] resultArray)> UpdateOracle = new("UpdateOracleRPC", (m, _) =>
+        public static RemoteProcess<(GamePlayer myPlayer, byte oracleTargetId, DefinedRole[] resultArray)> RpcUpdateOracle = new("UpdateDoomsayerOracleResult", (m, _) =>
         {
-            var player = GamePlayer.GetPlayer(m.Item1);
-            if(player.TryGetRole<Doomsayer.Instance>(out var role))
+            if(m.myPlayer.TryGetRole<Doomsayer.Instance>(out var role))
             {
-                role.oracledtargets.Add(m.Item2);
-                role.AddResult(m.Item2, m.Item3);
+                role.oracledtargets.Add(m.oracleTargetId);
+                role.AddResult(m.oracleTargetId, m.resultArray);
             }
         });
         GUIWidget RuntimeAssignable.ProgressWidget
@@ -237,7 +236,7 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                             List<DefinedRole> resultList = GiveResultList(player);
                             var resultArray = resultList.ToArray();
                             useskilltargets.Add(player.PlayerId);
-                            UpdateOracle.Invoke((MyPlayer.PlayerId, player.PlayerId, resultArray));
+                            RpcUpdateOracle.Invoke((MyPlayer, player.PlayerId, resultArray));
                             var sb = new System.Text.StringBuilder().Append(Language.Translate("role.doomsayer.oracletext").Replace("%NAME%", player.PlayerName).Replace("%ROLE%", string.Join(",", resultList.Select(r => r.DisplayColoredName))));
                             NebulaAPI.CurrentGame?.GetModule<MeetingOverlayHolder>()?.RegisterOverlay(NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, [
                             NebulaAPI.GUI.LocalizedText(GUIAlignment.Left,NebulaAPI.GUI.GetAttribute(AttributeAsset.OverlayTitle),"role.doomsayer.message.header"),
@@ -259,7 +258,7 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                             List<DefinedRole> resultList = GiveResultList(player);
                             var resultArray = resultList.ToArray();
                             useskilltargets.Add(oracleTarget.PlayerId);
-                            UpdateOracle.Invoke((MyPlayer.PlayerId, player.PlayerId,resultArray));
+                            RpcUpdateOracle.Invoke((MyPlayer, player.PlayerId,resultArray));
                             var sb = new System.Text.StringBuilder().Append(Language.Translate("role.doomsayer.oracletext").Replace("%NAME%", oracleTarget.PlayerName).Replace("%ROLE%", string.Join(",", resultList.Select(r => r.DisplayColoredName))));
                             NebulaAPI.CurrentGame?.GetModule<MeetingOverlayHolder>()?.RegisterOverlay(NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, [
                             NebulaAPI.GUI.LocalizedText(GUIAlignment.Left,NebulaAPI.GUI.GetAttribute(AttributeAsset.OverlayTitle),"role.doomsayer.message.header"),

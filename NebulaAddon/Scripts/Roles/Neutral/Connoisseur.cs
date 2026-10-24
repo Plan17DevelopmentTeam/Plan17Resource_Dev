@@ -133,7 +133,7 @@ public class Connoisseur : DefinedRoleTemplate, HasCitation, DefinedRole, IAssig
                         KillCooldown.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null,
                         (target, _) =>
                         {
-                            var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                            var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                             if (!(cancelable?.IsCanceled ?? false))
                             {
                                 leftKill--;

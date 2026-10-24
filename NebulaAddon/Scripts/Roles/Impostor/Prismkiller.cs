@@ -5,12 +5,12 @@ namespace Plana.Roles.Impostor;
 
 public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
-    private const float alpha = 0.5f;
-    private const int usesPerRound = 2;
-    private const float pullCooldown = 25f;
-    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, VisibleNextRound, PersistentShards]) { }
+    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, VisibleNextRound, PersistentShards])
+    {
+        ConfigurationHolder?.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismkiller.png")?.AsImage(115f);
+    }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
-    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismkiller.PNG")!.AsImage();
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismkiller.png")!.AsImage();
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CannotLoad;
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new Ability(player);
     public static readonly FloatConfiguration PrismCooldown = NebulaAPI.Configurations.Configuration("options.role.prismkiller.prismCooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
@@ -35,12 +35,17 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
 
     public class Ability : AbstractPlayerAbility, IPlayerAbility
     {
-        public static Image PlaceIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialPrismkillerButton.PNG" : "PrismButton.png")!.AsImage(115f)!;
-        public static Image PullIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialTradeButton.PNG" : "WarpButton_impostorVer.png")!.AsImage(115f)!;
+        public static Image PlaceIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialPrismkillerButton.png" : "PrismButton.png")!.AsImage(115f)!;
+        public static Image PullIcon = NebulaAPI.AddonAsset.GetResource(Prism.special ? "SpecialTradeButton.png" : "WarpButton_impostorVer.png")!.AsImage(115f)!;
+
+        private const float alpha = 0.5f;
+        private const int usesPerRound = 2;
+        private const float pullCooldown = 25f;
+
         private const float extendLen = 100f;
         int leftUses = usesPerRound;
         int pending;
-        List<int> mirrorIds = new();
+        List<int> mirrorIds = [];
         Vector2 mirrorA, mirrorB;
         bool hasMirror;
         ModAbilityButton? placeButton;
@@ -292,8 +297,8 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
         static Sprite GetShardSprite()
         {
             if (shardSprite != null) return shardSprite;
-            string name = Prism.special ? "SpecialBrokenMirror.PNG" : "GlassShard.png";
-            var res = NebulaAPI.AddonAsset.GetResource(name) ?? NebulaAPI.AddonAsset.GetResource("Prism.PNG");
+            string name = Prism.special ? "SpecialBrokenMirror.png" : "GlassShard.png";
+            var res = NebulaAPI.AddonAsset.GetResource(name) ?? NebulaAPI.AddonAsset.GetResource("Prism.png");
             return shardSprite = res!.AsImage(115f)!.GetSprite();
         }
     }
