@@ -10,7 +10,10 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
     private const float extendLen=100f;
     private const float alpha=0.2f;
     private const int usesPerRound = 2;
-    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound]) { }
+    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound])
+    {
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png.png")!.AsImage(115f)!;
+    }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismologist.PNG")!.AsImage();
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CannotLoad;

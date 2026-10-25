@@ -8,7 +8,10 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
     private const float alpha = 0.5f;
     private const int usesPerRound = 2;
     private const float pullCooldown = 25f;
-    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, VisibleNextRound, PersistentShards]) { }
+    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, VisibleNextRound, PersistentShards])
+    {
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismkiller.png.png")!.AsImage(115f)!;
+    }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismkiller.PNG")!.AsImage();
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CannotLoad;

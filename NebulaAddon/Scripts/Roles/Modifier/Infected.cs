@@ -284,7 +284,7 @@ public class Infected : DefinedModifierTemplate, DefinedAllocatableModifier, Has
                 {
                     SelectRoleScreen = OpenRoleSelectWindow(false, (DefinedRole r) => r.IsSpawnable && r.Category == RoleCategory.ImpostorRole&&!r.IsSystemRole, Language.Translate("role.infected.selectImpRoleText"), (DefinedRole r) =>
                     {
-                        Selected = null;
+                        Selected = true;
                         MyPlayer.SetRole(r,r.DefaultAssignableArguments);
                         SelectRoleScreen?.CloseScreen();
                         SelectRoleScreen = null;

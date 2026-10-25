@@ -9771,12 +9771,37 @@ public class PatchManager
         ms = (int)Math.Round(((double)num * 60.0 + num2) * 1000.0);
         return ms >= 0;
     }*/
-    static AssetBundle others = AssetBundle.LoadFromMemory(NebulaAPI.AddonAsset.GetResource("others.bundle").AsStream().ReadBytes());
+
     [HarmonyPatch]
     [NebulaPreprocess(PreprocessPhase.PostLoadAddons)]
-    public class LanguageSupportPatch()
+    public class LanguageSupportPatch
     {
-        public static string ReadByteText(TextAsset asset)
+        static AssetBundle? bundle;
+
+        static readonly Dictionary<string, uint> langIds = new()
+        {
+            ["en"] = 0,
+            ["jp"] = 11,
+            ["cn"] = 13
+        };
+
+        static readonly Dictionary<uint, Dictionary<string, string>> translationMap = new()
+        {
+            [0] = new(),
+            [11] = new(),
+            [13] = new()
+        };
+
+        static readonly Dictionary<uint, Dictionary<string, string>> overrideMap = new()
+        {
+            [0] = new(),
+            [11] = new(),
+            [13] = new()
+        };
+
+        static AssetBundle Bundle => bundle ??= AssetBundle.LoadFromMemory(NebulaAPI.AddonAsset.GetResource("others.bundle")!.AsStream()!.ReadBytes());
+
+        public static Stream ReadByteText(TextAsset asset)
         {
             byte[] xoredBytes = asset.bytes;
             byte[] base64Bytes = new byte[xoredBytes.Length];
@@ -9784,18 +9809,70 @@ public class PatchManager
                 base64Bytes[i] = (byte)(xoredBytes[i] ^ 0x5A);
             string base64 = Encoding.ASCII.GetString(base64Bytes);
             byte[] utf8Bytes = Convert.FromBase64String(base64);
-            return Encoding.UTF8.GetString(utf8Bytes);
-        }
-        public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
-        {
+            return new MemoryStream(utf8Bytes, writable: false);
         }
 
-        [HarmonyPatch(typeof(Language),nameof(Language.TryGetText)),HarmonyPrefix]
-        public static bool OnTryGetText(string translationKey, out string text,ref bool __result)
+        public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
         {
-            if (IsDev(EOSManager.Instance.FriendCode))
+            new Harmony("Plan17Language").PatchAll(typeof(LanguageSupportPatch));
+            yield return preprocessor.SetLoadingText("Loading Language Data");
+
+            foreach (string name in Bundle.GetAllAssetNames())
             {
+                string[] parts = name.Split('/');
+                if (parts.Length < 4) continue;
+
+                bool isOverride = parts[1] == "override";
+                if (!isOverride && parts[1] != "translate") continue;
+                if (!langIds.TryGetValue(parts[2], out uint langId)) continue;
+
+                var asset = Bundle.LoadAsset(name);
+                if (asset == null) continue;
+
+                var text = asset.TryCast<TextAsset>();
+                if (text == null) continue;
+
+                var map = isOverride ? overrideMap[langId] : translationMap[langId];
+                using var stream = ReadByteText(text);
+                Language.Deserialize(stream, (key, value) => map[key] = value, null, null);
             }
+
+            PDebug.Log($"[Language] keys cn={translationMap[13].Count}/{overrideMap[13].Count} jp={translationMap[11].Count}/{overrideMap[11].Count} en={translationMap[0].Count}/{overrideMap[0].Count}");
+        }
+
+        [HarmonyPatch(typeof(Language), nameof(Language.TryGetText)), HarmonyPrefix]
+        public static bool OnTryGetText(Language __instance, string? translationKey, out string? text, ref bool __result)
+        {
+            text = null;
+            if (translationKey == null) return true;
+
+            if (__instance == Language.CurrentLanguage)
+            {
+                if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
+                {
+                    __result = true;
+                    return false;
+                }
+            }
+            else if (__instance == Language.DefaultLanguage)
+            {
+                if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
+                {
+                    __result = true;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static bool Lookup(uint langId, string key, out string? text)
+        {
+            text = null;
+            if (!translationMap.ContainsKey(langId)) return false;
+            if (overrideMap[langId].TryGetValue(key, out text)) return true;
+            if (translationMap[langId].TryGetValue(key, out text)) return true;
+            return false;
         }
     }
 }
