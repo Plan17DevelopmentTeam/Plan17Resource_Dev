@@ -5485,26 +5485,31 @@ public class PatchManager
 
     public static void OnChatOpen(ChatController __instance)
     {
+        ShowChatHint(__instance);
+    }
+
+    static void ShowChatHint(ChatController chat)
+    {
         if (helpSeen)
         {
             helpHint.GetIfNotNull()?.gameObject.Destroy();
+            return;
         }
-        else if (helpHint == null)
-        {
-            helpHint = UnityEngine.Object.Instantiate<TextMeshPro>(AmongUsLLImpl.HudManagerInstance.MeetingPrefab.TimerText, __instance.freeChatField.transform);
-            helpHint.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
-            helpHint.raycastTarget = false;
-            helpHint.alignment = TextAlignmentOptions.Left;
-            helpHint.transform.localPosition = new UnityEngine.Vector3(-0.14f, 0.49f);
-            helpHint.rectTransform.sizeDelta = new(6f, 0.4496f);
-            helpHint.color = new UnityEngine.Color(1f, 1f, 1f, 0.35f);
-            helpHint.text = Language.Translate("chatcommand.p17help.hint");
+        if (helpHint != null || chat.freeChatField == null) return;
 
-            GameOperatorManager.Instance?.Subscribe<LobbyDestroyEvent>(ev =>
-            {
-                helpSeen = true;
-            }, new GameObjectLifespan(helpHint.gameObject));
-        }
+        helpHint = UnityEngine.Object.Instantiate<TextMeshPro>(AmongUsLLImpl.HudManagerInstance.MeetingPrefab.TimerText, chat.freeChatField.transform);
+        helpHint.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
+        helpHint.raycastTarget = false;
+        helpHint.alignment = TextAlignmentOptions.Left;
+        helpHint.transform.localPosition = new UnityEngine.Vector3(-0.14f, 0.49f);
+        helpHint.rectTransform.sizeDelta = new(6f, 0.4496f);
+        helpHint.color = new UnityEngine.Color(1f, 1f, 1f, 0.35f);
+        helpHint.text = Language.Translate("chatcommand.p17help.hint");
+
+        GameOperatorManager.Instance?.Subscribe<LobbyDestroyEvent>(ev =>
+        {
+            helpSeen = true;
+        }, new GameObjectLifespan(helpHint.gameObject));
     }
 
     //static TextMeshPro? chatTeamText;
@@ -5512,6 +5517,9 @@ public class PatchManager
     //static int CurrentChatId, currentIndex;
     public static void ChatUpdate(ChatController __instance)
     {
+        if (!helpSeen && helpHint == null && __instance.IsOpenOrOpening)
+            ShowChatHint(__instance);
+
         __instance.chatBubblePool.Prefab.CastFast<ChatBubble>().TextArea.UseRoleIcon();
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.C))
             ClipboardHelper.PutClipboardString(__instance.freeChatField.textArea.text);
@@ -9836,8 +9844,6 @@ public class PatchManager
                 using var stream = ReadByteText(text);
                 Language.Deserialize(stream, (key, value) => map[key] = value, null, null);
             }
-
-            PDebug.Log($"[Language] keys cn={translationMap[13].Count}/{overrideMap[13].Count} jp={translationMap[11].Count}/{overrideMap[11].Count} en={translationMap[0].Count}/{overrideMap[0].Count}");
         }
 
         [HarmonyPatch(typeof(Language), nameof(Language.TryGetText)), HarmonyPrefix]
