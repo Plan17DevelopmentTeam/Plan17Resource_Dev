@@ -5485,17 +5485,33 @@ public class PatchManager
 
     public static void OnChatOpen(ChatController __instance)
     {
+        RegisterIdentityChannels();
         ShowChatHint(__instance);
     }
+
+    internal static bool DarkThemeEnabled => ClientOption.AllOptions[(ClientOption.ClientOptionType)124].Value == 1;
+    internal static UnityEngine.Color DarkChatFieldColor => new Color32(40, 40, 40, byte.MaxValue);
+    internal static string ChatHelpHintSuffix => helpSeen ? "" : " | " + Language.Translate("chatcommand.p17help.hint").Color(new UnityEngine.Color(1f, 1f, 1f, 0.35f));
 
     static void ShowChatHint(ChatController chat)
     {
         if (helpSeen)
         {
             helpHint.GetIfNotNull()?.gameObject.Destroy();
+            helpHint = null;
             return;
         }
-        if (helpHint != null || chat.freeChatField == null) return;
+        if (chat.freeChatField == null) return;
+        if (PrivateChatPatches.ShouldShowChannelBar())
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+            return;
+        }
+        if (helpHint != null)
+        {
+            helpHint.gameObject.SetActive(true);
+            return;
+        }
 
         helpHint = UnityEngine.Object.Instantiate<TextMeshPro>(AmongUsLLImpl.HudManagerInstance.MeetingPrefab.TimerText, chat.freeChatField.transform);
         helpHint.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
@@ -5505,11 +5521,155 @@ public class PatchManager
         helpHint.rectTransform.sizeDelta = new(6f, 0.4496f);
         helpHint.color = new UnityEngine.Color(1f, 1f, 1f, 0.35f);
         helpHint.text = Language.Translate("chatcommand.p17help.hint");
+    }
 
-        GameOperatorManager.Instance?.Subscribe<LobbyDestroyEvent>(ev =>
+    static bool HasIdentityGroup(PlayerControl player, string? code, int channel)
+    {
+        if (player == null) return false;
+        if (channel == 2) return player.AmHost();
+        if (sponserInfoList == null || code == null) return false;
+        switch (channel)
         {
-            helpSeen = true;
-        }, new GameObjectLifespan(helpHint.gameObject));
+            case 1:
+                return GetSponsersInfo(4)?.Any(c => c.Friendcode == code) ?? false;
+            case 3:
+                return GetSponsersInfo(3)?.Any(c => c.Friendcode == code) ?? false;
+            case 4:
+                return GetSponsersInfo(2)?.Any(c => c.Friendcode == code) ?? false;
+            case 5:
+                return GetSponsersInfo(1)?.Any(c => c.Friendcode == code) ?? false;
+        }
+        return false;
+    }
+
+    static bool CanUseSpecialChannelGroup(PlayerControl? player)
+    {
+        if (player == null) return false;
+        if (!player.AmHost() && !IsSponser(player)) return false;
+        return CanSendAdminMessage || IsAdmin(player);
+    }
+
+    static bool CanUseIdentityChannel(int channel)
+    {
+        var manager = PrivateChatManager.Instance;
+        if (manager == null || manager.CurrentGroup != PrivateChatManager.SpecialGroup) return false;
+        var player = AmongUsLLImpl.LocalPlayer;
+        if (player == null) return false;
+        if (!CanUseSpecialChannelGroup(player)) return false;
+        return HasIdentityGroup(player, GetClient(player)?.FriendCode, channel);
+    }
+
+    static string IdentityChannelKey(int channel)
+    {
+        switch (channel)
+        {
+            case 1:
+                return "say.channel.developer";
+            case 2:
+                return "say.channel.host";
+            case 3:
+                return "say.channel.admin";
+            case 4:
+                return "say.channel.contributor";
+            case 5:
+                return "say.channel.sponser";
+        }
+        return "";
+    }
+
+    static Color IdentityChannelColor(int channel)
+    {
+        switch (channel)
+        {
+            case 1:
+                return new Color(232, 31, 99, 255);
+            case 2:
+                return Color.Red;
+            case 3:
+                return Color.Green;
+            case 4:
+            case 5:
+                return Color.Cyan;
+        }
+        return Color.White;
+    }
+
+    static string BuildAutoMessageName(PlayerControl p)
+    {
+        var messagename = ("Special Message Sender:" + p.name).Color(UnityEngine.Color.yellow);
+        if (IsDev(p, true))
+        {
+            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+        }
+        else if (p.AmHost())
+        {
+            messagename = "Host Message".Color(UnityEngine.Color.red);
+        }
+        else if (IsDev(p, false))
+        {
+            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+        }
+        else if (IsAdmin(p))
+        {
+            messagename = ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+        }
+        else if (IsContributor(p))
+        {
+            messagename = ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        else if (IsSponser(p))
+        {
+            messagename = ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        return messagename;
+    }
+
+    static string BuildIdentityMessageName(int channel, PlayerControl p)
+    {
+        switch (channel)
+        {
+            case 1:
+                return ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+            case 2:
+                return "Host Message".Color(UnityEngine.Color.red);
+            case 3:
+                return ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+            case 4:
+                return ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+            case 5:
+                return ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        return BuildAutoMessageName(p);
+    }
+
+    static void RegisterIdentityChannels()
+    {
+        var manager = PrivateChatManager.Instance;
+        if (manager == null || manager.AllChannels.Any(c => c.Id is "say.channel.developer")) return;
+        var lifespan = new FunctionalLifespan(() => true);
+        for (var i = 1; i <= 5; i++)
+        {
+            var channel = i;
+            manager.RegisterPublicChannel(
+                IdentityChannelColor(channel),
+                IdentityChannelColor(channel),
+                IdentityChannelKey(channel),
+                Language.Translate(IdentityChannelKey(channel)),
+                lifespan,
+                () => CanUseIdentityChannel(channel),
+                true,
+                message =>
+                {
+                    var p = AmongUsLLImpl.LocalPlayer;
+                    if (p == null) return;
+                    RpcSendChat.Invoke((p.PlayerId, BuildIdentityMessageName(channel, p), message));
+                },
+                PrivateChatManager.SpecialGroup);
+        }
+        if (manager.CurrentChat == null)
+        {
+            manager.ChangeChannel(AmongUsLLImpl.HudManagerBridge.Chat, PrivateChatPatches.chatTeamText, manager.AllChannels.FirstOrDefault(c => c.Id is "public"));
+        }
     }
 
     //static TextMeshPro? chatTeamText;
@@ -5517,8 +5677,24 @@ public class PatchManager
     //static int CurrentChatId, currentIndex;
     public static void ChatUpdate(ChatController __instance)
     {
-        if (!helpSeen && helpHint == null && __instance.IsOpenOrOpening)
+        RegisterIdentityChannels();
+        UpdateSpecialChannelGroup(__instance);
+        if (helpSeen)
+        {
+            if (helpHint != null)
+            {
+                helpHint.gameObject.Destroy();
+                helpHint = null;
+            }
+        }
+        else if (PrivateChatPatches.ShouldShowChannelBar())
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+        }
+        else if (__instance.IsOpenOrOpening)
+        {
             ShowChatHint(__instance);
+        }
 
         __instance.chatBubblePool.Prefab.CastFast<ChatBubble>().TextArea.UseRoleIcon();
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.C))
@@ -5661,10 +5837,45 @@ public class PatchManager
             PDebug.Log(e);
         }*/
     }
+
+    static void UpdateSpecialChannelGroup(ChatController chat)
+    {
+        if (!CanUseSpecialChannelGroup(AmongUsLLImpl.LocalPlayer))
+        {
+            ctrlHoldTime = 0f;
+            ctrlHoldTriggered = false;
+            var chatManager = PrivateChatManager.Instance;
+            if (chatManager != null && chatManager.CurrentGroup == PrivateChatManager.SpecialGroup)
+            {
+                chatManager.RefreshChannel(chat, PrivateChatPatches.chatTeamText);
+            }
+            return;
+        }
+        var control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        if (!control || !chat.IsOpenOrOpening)
+        {
+            ctrlHoldTime = 0f;
+            ctrlHoldTriggered = false;
+            return;
+        }
+        if (ctrlHoldTriggered) return;
+        ctrlHoldTime += Time.unscaledDeltaTime;
+        if (ctrlHoldTime < 1f) return;
+        ctrlHoldTriggered = true;
+        var manager = PrivateChatManager.Instance;
+        if (manager == null) return;
+        if (manager.ToggleSpecialGroup(chat, PrivateChatPatches.chatTeamText))
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+        }
+    }
+
     public static List<string> ChatHistory = new();
     public static int CurrentHistorySelection = -1;
     static bool helpSeen;
     static TextMeshPro helpHint;
+    static float ctrlHoldTime;
+    static bool ctrlHoldTriggered;
     static readonly string p17Name = "Plan".Color(new Color32(136, 191, 100, 255)) + "17".Color(new Color32(191, 100, 175, 255));
     static void SendChatAs(string name, string chat)
     {
@@ -5718,6 +5929,8 @@ public class PatchManager
             switch (command.ToLower())
             {
                 case "/p17help":
+                    helpSeen = true;
+                    helpHint.GetIfNotNull()?.gameObject.SetActive(false);
                     SendChatAs(p17Name, Language.Translate("chatcommand.p17help.page1"));
                     __instance.freeChatField.Clear();
                     return false;
@@ -5981,32 +6194,9 @@ public class PatchManager
                         }
                         __instance.freeChatField.Clear();
                         var p = AmongUsLLImpl.LocalPlayer;
-                        var messagename = ("Special Message Sender:" + p.name).Color(UnityEngine.Color.yellow);
-                        if (IsDev(p, true))
-                        {
-                            messagename = "Developer Message".Color(new Color32(232, 31, 99, 255));
-                        }
-                        else if (p.AmHost())
-                        {
-                            messagename = "Host Message".Color(UnityEngine.Color.red);
-                        }
-                        else if (IsDev(p, false))
-                        {
-                            messagename = "Developer Message".Color(new Color32(232, 31, 99, 255));
-                        }
-                        else if (IsAdmin(p))
-                        {
-                            messagename = ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
-                        }
-                        else if (IsContributor(p))
-                        {
-                            messagename = ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
-                        }
-                        else if (IsSponser(p))
-                        {
-                            messagename = ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
-                        }
-                        RpcSendChat.Invoke((p.PlayerId, messagename, string.Join(" ", strs.Skip(1))));
+                        var message = string.Join(" ", strs.Skip(1));
+                        var messagename = BuildAutoMessageName(p);
+                        RpcSendChat.Invoke((p.PlayerId, messagename, message));
                         return false;
                     }
                     break;

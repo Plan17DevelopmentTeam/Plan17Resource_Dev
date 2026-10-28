@@ -324,7 +324,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
                     this.killButton.OnClick = delegate (ModAbilityButton button)
                     {
                         var player = killTracker.CurrentTarget;
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>
