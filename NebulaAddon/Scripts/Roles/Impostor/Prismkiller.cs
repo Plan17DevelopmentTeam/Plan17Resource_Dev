@@ -126,7 +126,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
         {
             if (!mirrors.TryGetValue(ev.Player.PlayerId, out var mirror)) return;
             mirror.UpdateFromPlayerOutfit(ev.Player.VanillaPlayer, false, false);
-            mirror.Cosmetics.nameText.text = ev.Player.VanillaPlayer.cosmetics.nameText.text;
+            mirror.Cosmetics.nameText.text = ev.Player.PlayerName;
         }
         Vector2? Reflect(Vector2 worldPos)
         {
@@ -254,7 +254,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
                 mirror.UpdateFromPlayerOutfit(player.VanillaPlayer, false, false);
                 mirror.Cosmetics.ToggleName(true);
                 mirror.Cosmetics.nameText.transform.parent.localPosition = new UnityEngine.Vector3(0f, 1f, -0.5f);
-                mirror.Cosmetics.nameText.text = player.VanillaPlayer.cosmetics.nameText.text;
+                mirror.Cosmetics.nameText.text = player.PlayerName;
                 mirror.Cosmetics.nameText.color = new UnityEngine.Color(1f, 1f, 1f, alpha);
                 mirrors[player.PlayerId] = mirror;
             }

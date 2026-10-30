@@ -798,7 +798,7 @@ public class JusticePlusMeetingHud : MonoBehaviour
 [NebulaRPCHolder]
 public class JusticePlus : DefinedSingleAbilityRoleTemplate<JusticePlus.Ability>, HasCitation, DefinedRole, IAssignableDocument
 {
-    private JusticePlus():base("justicePlus", new(194,242,255), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [JusticeMeetingTimeOption,JusticeMeetingMaxPlayerOption,JusticeMeetingMinPlayerOption])
+    private JusticePlus():base("justicePlus", new(194,242,255), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [JusticeMeetingTimeOption,JusticeMeetingMaxPlayerOption,JusticeMeetingMinPlayerOption,ExileAllSmiliarVoteOption,ExileAllSmiliarNeedMaxVote,ExileNeedDifferenceMaxVote])
     {
         ConfigurationHolder?.AddTags(ConfigurationTags.TagSNR);
         ConfigurationHolder!.Illustration = new NebulaSpriteLoader("Assets/NebulaAssets/Sprites/Configurations/Justice.png");
@@ -812,8 +812,8 @@ public class JusticePlus : DefinedSingleAbilityRoleTemplate<JusticePlus.Ability>
     static public readonly IntegerConfiguration JusticeMeetingMaxPlayerOption = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.JusticePlusMaxPlayer", (1,15), 4);
     static public readonly IntegerConfiguration JusticeMeetingMinPlayerOption = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.JusticePlusMinPlayer", (1, 3), 1);
     static public readonly BoolConfiguration ExileAllSmiliarVoteOption = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.exileAllSmiliarVote", false);
-    static public readonly IntegerConfiguration ExileNeedDifferenceMaxVote = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.exileNeedDifferenceMaxVote", (1, 5), 2);
-    static public readonly IntegerConfiguration ExileAllSmiliarNeedMaxVote = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.exileAllSmiliarNeedMaxVote", (2, 20), 5);
+    static public readonly IntegerConfiguration ExileNeedDifferenceMaxVote = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.exileNeedDifferenceMaxVote", (1, 20), 2, () => ExileAllSmiliarVoteOption.GetValue());
+    static public readonly IntegerConfiguration ExileAllSmiliarNeedMaxVote = NebulaAPI.Configurations.Configuration("options.role.JusticePlus.exileAllSmiliarNeedMaxVote", (1, 20), 2, () => ExileAllSmiliarVoteOption.GetValue());
     static public readonly JusticePlus MyRole = new();
 
     bool IAssignableDocument.HasTips => true;
@@ -877,6 +877,7 @@ public class JusticePlus : DefinedSingleAbilityRoleTemplate<JusticePlus.Ability>
         [Local]
         void OnMeetingStart(MeetingStartEvent ev)
         {
+            pendingExile = null;
             void StartJusticePlusMeeting(List<GamePlayer> list)
             {
                 try
@@ -992,39 +993,30 @@ public class JusticePlus : DefinedSingleAbilityRoleTemplate<JusticePlus.Ability>
             isMyJusticePlusMeeting = false;
             justicePlayers = new();
         }
-        void OnFixVote(PlayerFixVoteHostEvent ev)
+        void OnFixExiled(MeetingFixExiledHostEvent ev)
         {
-            return;
-            if (ExileAllSmiliarVoteOption&&isMyJusticePlusMeeting)
-            {
-                var justiceplayer=MeetingHud.Instance.playerStates.Where(p => justicePlayers.Any(player => p.PlayerId == player.PlayerId));
-                List<PlayerVoteArea> simliarList = new();
-                int max = Mathf.Max(justicePlayers.Select(p => MeetingHud.Instance.playerStates.Count(v => v.VotedForId == p.PlayerId)).ToArray());
-                if (max<ExileAllSmiliarNeedMaxVote)
-                {
-                    return;
-                }
-                justiceplayer = justiceplayer.Where(p => MeetingHud.Instance.playerStates.Count(v => v.VotedForId == p.PlayerId) >= max - ExileNeedDifferenceMaxVote);
-                var maxVoteAreas = MeetingHud.Instance.playerStates.Where(v => MeetingHud.Instance.playerStates.Count(area => area.VotedForId == v.PlayerId) == max);
-                var maxVotePlayers = maxVoteAreas.Select(v=>GamePlayer.GetPlayer(v.PlayerId)).ToList();
-                foreach (var state in justiceplayer)
-                {
-                    int stateVotes = MeetingHud.Instance.playerStates.Count(v => v.VotedForId == state.PlayerId);
-                    if (stateVotes==max)
-                    {
-                        continue;
-                    }
-                    else if (ev.VoteTo==null||!maxVotePlayers.Contains(ev.VoteTo))
-                    {
-                        ev.VoteTo = GamePlayer.GetPlayer(state.PlayerId);
-                        ev.Vote = max;
-                    }
-                }
-                if (justiceplayer.All(p => MeetingHud.Instance.playerStates.Count(v => v.VotedForId == p.PlayerId) == max))
-                {
-                    ev.VoteTo = null;
-                }
-            }
+            if (!isMyJusticePlusMeeting || !ExileAllSmiliarVoteOption) return;
+            int VotesFor(GamePlayer p) => MeetingHud.Instance.playerStates.Sum(s => s.VotedForId.Value == p.PlayerId ? MeetingHudExtension.WeightMap.GetValueOrDefault(s.PlayerId.Value, 1) : 0);
+
+            int max = justicePlayers.Max(VotesFor);
+            if (max < ExileAllSmiliarNeedMaxVote) return;
+            var similar = justicePlayers.Where(p => max - VotesFor(p) < ExileNeedDifferenceMaxVote).ToArray();
+            if (similar.Length < 2) return;
+            byte[] ids = similar.Select(p => p.PlayerId).ToArray();
+            NebulaManager.Instance.StartDelayAction(0f, () => RpcSimilarExile(ids));
+        }
+
+        static byte[]? pendingExile;
+
+        [NebulaRPC]
+        public static void RpcSimilarExile(byte[] ids) => pendingExile = ids;
+
+        void OnExilePreStart(ExileScenePreStartEvent ev)
+        {
+            if (pendingExile == null) return;
+            var exiled = pendingExile.Select(id => GamePlayer.GetPlayer(id)).Where(p => p != null).Select(p => p!).ToArray();
+            pendingExile = null;
+            if (exiled.Length > 1) MeetingHudExtension.ExiledAllModCache = exiled;
         }
         [EventPriority(EventPriority.VeryLow)]
         void ClearTieExtraVote(MeetingTieVoteHostEvent ev)
