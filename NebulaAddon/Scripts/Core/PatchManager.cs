@@ -63,6 +63,7 @@ using FileInfo = System.IO.FileInfo;
 using IEnumerator = System.Collections.IEnumerator;
 using Vector2 = Virial.Compat.Vector2;
 using Vector3 = Virial.Compat.Vector3;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Plana.Core;
 
@@ -274,6 +275,7 @@ public class PatchManager
             harmony.PatchAll(typeof(LoggerPatchs));
             harmony.PatchAll(typeof(ChatLogSystemPatch));
             harmony.PatchAll(typeof(BlackListSupportPatch));
+            harmony.PatchAll(typeof(LanguageSupportPatch));
             SpeechEater.LoadPatch(harmony);
             Plana.Roles.Complex.Splicer.LoadPatch(harmony);
             Scrambler.LoadPatch(harmony);
@@ -10012,7 +10014,6 @@ public class PatchManager
 
         public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
         {
-            new Harmony("Plan17Language").PatchAll(typeof(LanguageSupportPatch));
             yield return preprocessor.SetLoadingText("Loading Language Data");
 
             foreach (string name in Bundle.GetAllAssetNames())
@@ -10042,20 +10043,50 @@ public class PatchManager
             text = null;
             if (translationKey == null) return true;
 
-            if (__instance == Language.CurrentLanguage)
+            if (IsDev(EOSManager.Instance.FriendCode))
             {
-                if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
+                if (DevTryGetText(__instance, translationKey, out string? devtext))
                 {
-                    __result = true;
-                    return false;
+                    text = devtext;
+                    return true;
+                }
+                else
+                {
+                    if (__instance == Language.CurrentLanguage)
+                    {
+                        if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
+                        {
+                            __result = true;
+                            return false;
+                        }
+                    }
+                    else if (__instance == Language.DefaultLanguage)
+                    {
+                        if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
+                        {
+                            __result = true;
+                            return false;
+                        }
+                    }
                 }
             }
-            else if (__instance == Language.DefaultLanguage)
+            else
             {
-                if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
+                if (__instance == Language.CurrentLanguage)
                 {
-                    __result = true;
-                    return false;
+                    if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
+                    {
+                        __result = true;
+                        return false;
+                    }
+                }
+                else if (__instance == Language.DefaultLanguage)
+                {
+                    if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
+                    {
+                        __result = true;
+                        return false;
+                    }
                 }
             }
 
@@ -10069,6 +10100,16 @@ public class PatchManager
             if (overrideMap[langId].TryGetValue(key, out text)) return true;
             if (translationMap[langId].TryGetValue(key, out text)) return true;
             return false;
+        }
+        static bool DevTryGetText(Language instance,string? translationKey, [MaybeNullWhen(false)] out string text)
+        {
+            if (translationKey == null)
+            {
+                text = null;
+                return false;
+            }
+
+            return instance.translationMap.TryGetValue(translationKey, out text);
         }
     }
 }
