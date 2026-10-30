@@ -190,7 +190,7 @@ public class Pollyanna : DefinedSingleAbilityRoleTemplate<Pollyanna.Ability>, Ha
                 killButton.OnClick = (button) =>
                 {
                     var player = myTracker.CurrentTarget;
-                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
                         if (markedButton != null && markedButton.IsInEffect)
