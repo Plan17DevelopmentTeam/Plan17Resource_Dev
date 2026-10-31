@@ -1,4 +1,4 @@
-﻿
+
 namespace Plana.Roles.Crewmate;
 
 [NebulaRPCHolder]
@@ -53,6 +53,10 @@ public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, 
 
         static internal Image KillButtonSprite => Sheriff.buttonSprite;
         public int leftShots;
+
+        int killCount;
+        bool killedImpostor;
+
         public Ability(GamePlayer player, bool isUsurped, int shots) : base(player, isUsurped)
         {
             leftShots = shots;
@@ -92,9 +96,21 @@ public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, 
                     var target = killTracker.CurrentTarget;
                     if (CanKill(target.RealPlayer))
                     {
+                        if (target.RealPlayer.IsTrueCrewmate)
+                        {
+                            new StaticAchievementToken("badsheriff.common1");
+                            killCount++;
+                        }
+
+                        if (target.RealPlayer.IsImpostor)
+                        {
+                            killedImpostor = true;
+                        }
+
                         if (target.RealPlayer.TryGetAbility<Sheriff.Ability>(out var ab))
                         {
                             target.RealPlayer.MurderPlayer(MyPlayer, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
+                            new StaticAchievementToken("badsheriff.another1");
                             return;
                         }
                         if (target.RealPlayer.Role is SchrodingerCat.Instance)
@@ -180,6 +196,29 @@ public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, 
         {
             ev.SetBlockedIf(ev.GameEnd == NebulaGameEnd.CrewmateWin);
         }
+
+        [Local]
+        void OnGameEnd(GameEndEvent ev)
+        {
+            if (MyPlayer.IsAlive && killCount >= 3)
+            {
+                new StaticAchievementToken("badsheriff.challenge1");
+            }
+
+            if (ev.EndState.EndCondition == NebulaGameEnds.ImpostorGameEnd.Get() && ev.CheckWin(MyPlayer))
+            {
+                if (!GamePlayer.AllPlayers.Any(p =>p.IsImpostor && p.IsAlive))
+                {
+                    new StaticAchievementToken("badsheriff.challenge2");
+                }
+
+                if (killedImpostor)
+                {
+                    new StaticAchievementToken("badsheriff.another2");
+                }
+            }
+        }
+
         [Local]
         void OnMeetingStart(MeetingStartEvent ev)
         {
