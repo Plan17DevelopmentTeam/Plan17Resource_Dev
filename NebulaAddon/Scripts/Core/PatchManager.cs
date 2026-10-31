@@ -3855,56 +3855,39 @@ public class PatchManager
             }
         }
 
-        static RemoteProcess<(string, string)> SetOptionMessageRpc = new RemoteProcess<(string, string)>("SetOptionMessage", (message, _) =>
+        static RemoteProcess<(string, string, string)> SetOptionMessageRpc = new("SetOptionMessage", (message, _) =>
         {
             var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
             var key = message.Item1.Sum(c => c);
-            var item = message.Item2;
+
+            var msgText = BuildOptionMessage(message.Item1, message.Item2, message.Item3);
 
             if (notifier.lastMessageKey == key && notifier.activeMessages.Count > 0)
-                notifier.activeMessages[^1].UpdateMessage(item);
+                notifier.activeMessages[^1].UpdateMessage(msgText);
             else
             {
                 notifier.lastMessageKey = key;
                 LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, UnityEngine.Vector3.zero, Quaternion.identity, notifier.transform);
                 newMessage.transform.localPosition = new Vector3(0f, 0f, -2f);
                 var action = () => notifier.OnMessageDestroy(newMessage);
-                newMessage.SetUp(item, notifier.settingsChangeSprite, notifier.settingsChangeColor, action);
+                newMessage.Text.UseRoleIcon();
+                newMessage.SetUp(msgText, notifier.settingsChangeSprite, notifier.settingsChangeColor, action);
                 notifier.ShiftMessages();
                 notifier.AddMessageToQueue(newMessage);
             }
             AmongUsLLImpl.SoundManagerInstance.PlaySoundImmediate(notifier.settingsChangeSound, false, 1f, 1f, null);
         });
 
-        public static string? GetDisplayColoredName(string LocalizedName)
+        public static string? GetDisplayColoredName(DefinedAssignable? assignable, Color color, AssignmentType? assignmentType = null)
         {
-            if (string.IsNullOrWhiteSpace(LocalizedName))
-                throw new ArgumentException("The key cannot be null.", nameof(LocalizedName));
+            if (assignable == null) return null;
 
-            var roleName = Nebula.Roles.Roles.AllRoles?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName
-                       ?? Nebula.Roles.Roles.AllModifiers?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName
-                       ?? Nebula.Roles.Roles.AllGhostRoles?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName;
+            string text = assignable.DisplayName.Color(color);
 
-            if (!string.IsNullOrEmpty(roleName))
-                return roleName;
-            return null;
-        }
-        public static string? GetTypeName(string typeName)
-        {
-            if (string.IsNullOrWhiteSpace(typeName))
-                throw new ArgumentException("The key cannot be null.", nameof(typeName));
+            if (assignmentType == null) 
+                return $"{assignable.GetRoleIconTag()} {text}";
 
-            var postfix = AssignmentType.AllTypes?.FirstOrDefault(type => string.Compare(type.Postfix, typeName) == 0)?.RelatedRole;
-            var postfixRoleColor = postfix?.Color;
-
-            if (postfixRoleColor != null)
-            {
-                var unityColor = postfixRoleColor.Value.ToUnityColor();
-                var hex = ColorUtility.ToHtmlStringRGBA(unityColor);
-
-                return hex;
-            }
-            return null;
+            return $"{assignable.GetRoleIconTag(assignmentType)} {text}";
         }
 
         private static string? ProcessKeyForTranslation(string originalKey)
@@ -3913,32 +3896,39 @@ public class PatchManager
                 return originalKey;
 
             var keyParts = originalKey.Split('.');
-            if (keyParts.Length < 2)
+            if (keyParts.Length < 2 || keyParts == null)
                 return originalKey;
 
-            var firstPart = keyParts.Length > 0 ? keyParts[0] : null;
-            var secondPart = keyParts.Length > 1 ? keyParts[1] : null;
-            var thirdPart = keyParts.Length > 2 ? keyParts[2] : null;
-            var fourthPart = keyParts.Length > 3 ? keyParts[3] : null;
+            var firstPart = keyParts.Length > 0 ? keyParts[0] : "";
+            var secondPart = keyParts.Length > 1 ? keyParts[1] : "";
+            var thirdPart = keyParts.Length > 2 ? keyParts[2] : "";
 
-            if ((firstPart!.Equals("options", StringComparison.Ordinal) && secondPart!.Equals("role", StringComparison.Ordinal))
+            if ((firstPart.Equals("options", StringComparison.Ordinal) && secondPart.Equals("role", StringComparison.Ordinal))
                 || firstPart.Equals("role", StringComparison.Ordinal))
             {
-                var type = GetTypeName(thirdPart!);
-                if (type is not null)
+                var postfix = AssignmentType.AllTypes?.FirstOrDefault(type => type.Postfix == thirdPart);
+
+                DefinedAssignable? assignable = NebulaAPI.Assignables.GetRole(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetModifier(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetGhostRole(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetRole(thirdPart);
+                assignable ??= NebulaAPI.Assignables.GetModifier(thirdPart);
+                assignable ??= NebulaAPI.Assignables.GetGhostRole(thirdPart);
+
+                if (assignable == null) return null;
+
+                if (postfix != null)
                 {
-                    string outkey = $"<color=#{type}>" + Language.Translate($"role.{secondPart}.name") + "</color>";
-                    return outkey + ": ";
+                    return GetDisplayColoredName(assignable, postfix.Color, postfix) + ": ";
                 }
-                else
-                {
-                    var targetKey = firstPart.Equals("role") ? secondPart : thirdPart!;
-                    return GetDisplayColoredName(targetKey!)! + ": ";
-                }
+
+                return GetDisplayColoredName(assignable, assignable.Color) + ": ";
             }
-            else if (secondPart!.Equals("gamemode", StringComparison.Ordinal)) return null;
+            else if (secondPart.Equals("gamemode", StringComparison.Ordinal)) return null;
             else
-                return firstPart.Equals("options") ? Language.Translate($"options.{secondPart}") + ": " : originalKey;
+            {
+                return firstPart.Equals("options") ? Language.Translate($"options.{(secondPart == "general" ? "extra" : secondPart)}") + ": " : originalKey;
+            }
         }
 
         private static string? ProcessKey(string originalKey)
@@ -4023,11 +4013,61 @@ public class PatchManager
             return Language.Translate(originalKey);
         }
 
-        private static string BuildOptionMessage(string key, string valueStr)
+        private static string BuildOptionMessage(string key, string value, string typeName)
         {
+            switch (typeName)
+            {
+                case "int":
+                    if (key.Contains("secondaryChance") || key.Contains("chance"))
+                        value += Language.Translate("options.percentage");
+                    if (key.Contains("gamemode"))
+                    {
+                        if (value == "0")
+                            value = Language.Translate("gamemode.standard");
+                        else if (value == "1")
+                            value = Language.Translate("gamemode.freeplay");
+                        else if (value == "2")
+                            value = Language.Translate("gamemode.aeroguesser");
+                    }
+                    else if (key.Contains("type"))
+                    {
+                        if (value == "0")
+                            value = Language.Translate("options.killCoolDown.type.immediate");
+                        else if (value == "1")
+                            value = Language.Translate("options.killCoolDown.type.relative");
+                        else if (value == "2")
+                            value = Language.Translate("options.killCoolDown.type.ratio");
+                    }
+                    break;
+
+                case "bool":
+                    value = Language.Translate($"BoolOption{value}");
+                    break;
+                case "float":
+                    if (!float.TryParse(value, out var num))
+                    {
+                        break;
+                    }
+
+                    value = FormatFloat(num) + (key switch
+                    {
+                        _ when key.Contains("coolDown", StringComparison.OrdinalIgnoreCase) || key.Contains("duration", StringComparison.OrdinalIgnoreCase) => Language.Translate("options.sec"),
+                        _ when key.Contains("ratio") || key.Contains("Range") => Language.Translate("options.cross"),
+                        _ when key.Contains("roleChance") => Language.Translate("options.percentage"),
+                        _ when key.Contains("type") => "",
+                        _ => ""
+                    });
+                    break;
+            }
+
+            static string FormatFloat(float number) => number.ToString().Contains('.') && number.ToString().Split('.')[1].Length >= 2 
+                ? number.ToString("F2") : number.ToString();
+
             var prefixKey = ProcessKeyForTranslation(key);
-            var translatedKey = ProcessKey(key)!;
-            return $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\"><b>{prefixKey}{translatedKey}</b>{Language.Translate("UpdateOptionMessage")}{valueStr}</font>";
+            var translatedKey = ProcessKey(key);
+            string finalText = $"{prefixKey}{translatedKey}".Bold();
+
+            return $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\">{finalText}{Language.Translate("UpdateOptionMessage")}{value.Bold()}</font>";
         }
 
         public static void IntergerChangeValue(ISharableVariable<int> __instance)
@@ -4037,27 +4077,7 @@ public class PatchManager
                 return;
 
             var valueStr = __instance.CurrentValue.ToString();
-            if (key.Contains("secondaryChance") || key.Contains("chance"))
-                valueStr += Language.Translate("options.percentage");
-            if (key.Contains("gamemode"))
-            {
-                if (valueStr == "0")
-                    valueStr = Language.Translate("gamemode.standard");
-                else if (valueStr == "1")
-                    valueStr = Language.Translate("gamemode.freeplay");
-                else if (valueStr == "2")
-                    valueStr = Language.Translate("gamemode.aeroguesser");
-            }
-            else if (key.Contains("type"))
-            {
-                if (valueStr == "0")
-                    valueStr = Language.Translate("options.killCoolDown.type.immediate");
-                else if (valueStr == "1")
-                    valueStr = Language.Translate("options.killCoolDown.type.relative");
-                else if (valueStr == "2")
-                    valueStr = Language.Translate("options.killCoolDown.type.ratio");
-            }
-            SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, valueStr)));
+            SetOptionMessageRpc.Invoke((key, valueStr, "int"));
         }
 
         public static void BoolChangeValue(BoolConfiguration __instance)
@@ -4070,9 +4090,7 @@ public class PatchManager
                 if (key.Contains("diagnosis"))
                     return;
 
-                var boolStr = __instance ? 1 : 0;
-                var valueStr = Language.Translate($"BoolOption{boolStr}");
-                SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, valueStr)));
+                SetOptionMessageRpc.Invoke((key, (__instance ? 1 : 0).ToString(), "bool"));
             }
             catch (Exception e)
             {
@@ -4086,20 +4104,7 @@ public class PatchManager
             if (key.Contains("diagnosis"))
                 return;
 
-            static string FormatFloat(float number) =>
-                number.ToString().Contains('.') && number.ToString().Split('.')[1].Length >= 2
-                    ? number.ToString("F2")
-                    : number.ToString();
-
-            var value = FormatFloat(__instance.CurrentValue) + (key switch
-            {
-                _ when key.Contains("coolDown", StringComparison.OrdinalIgnoreCase) || key.Contains("duration", StringComparison.OrdinalIgnoreCase) => Language.Translate("options.sec"),
-                _ when key.Contains("ratio") || key.Contains("Range") => Language.Translate("options.cross"),
-                _ when key.Contains("roleChance") => Language.Translate("options.percentage"),
-                _ when key.Contains("type") => "",
-                _ => ""
-            });
-            SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, value)));
+            SetOptionMessageRpc.Invoke((key, __instance.CurrentValue.ToString(), "float"));
         }
     }
     public static bool NumberOptionInitializePrefix(NumberOption __instance)
