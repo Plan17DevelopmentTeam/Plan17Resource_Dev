@@ -3530,19 +3530,16 @@ public class PatchManager
             else
                 Exit();
         }
-        [HarmonyPatch(typeof(ShowIntroPatch), "Prefix"), HarmonyPrefix]
-        public static bool BlockNoSShow(ref bool __result)
+
+        [HarmonyPatch(typeof(ShowIntroPatch), "CoBegin"), HarmonyPrefix]
+        public static bool CoShowIntro(IntroCutscene __instance, ref System.Collections.IEnumerator __result)
         {
-            __result = true;
+            if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return true;
+
+            __result = CoBegin(__instance);
             return false;
         }
-        [HarmonyPatch(typeof(IntroCutscene), "CoBegin"), HarmonyPrefix]
-        public static bool CoShowIntro(IntroCutscene __instance, ref Il2CppSystem.Collections.IEnumerator __result)
-        {
-            NebulaAPI.CurrentGame!.SetGameMode(GeneralConfigurations.CurrentGameMode.InstantiateModule());
-            __result = CoBegin(__instance).WrapToIl2Cpp();
-            return false;
-        }
+
         static System.Collections.IEnumerator CoBegin(IntroCutscene __instance)
         {
             if (BeforeStartGameDisconnectKickAll)
@@ -5154,7 +5151,8 @@ public class PatchManager
         bridge.SabotageButton.ToggleVisible(modPlayer?.CanInvokeSabotage ?? false);
         var ventState = GameOperatorManager.Instance?.Run(new Virial.Events.Player.PlayerUpdateVentStateLocalEvent(modPlayer));
         bridge.ImpostorVentButton.ToggleVisible(!flag && ((ventState?.ShouldShowVentButton ?? false) || localPlayer.walkingToVent || localPlayer.inVent));
-        bridge.MapButtonObj.SetActive(NebulaGameManager.Instance.GameMode?.ShowMap ?? true);
+        bridge.MapButtonObj.SetActive(NebulaAPI.CurrentGame?.GameMode?.ShowMap ?? true);
+
         if (modPlayer != null && modPlayer.TryGetModifier<MadmatePLUS.Instance>(out var madmate) && !modPlayer.IsImpostor)
         {
             bridge.SabotageButton.ToggleVisible(madmate != null && MadmatePLUS.CanInvokeSabotageOption);
@@ -5333,19 +5331,12 @@ public class PatchManager
             return null!;
         }
     }
-    static bool IsPlusAdmin(PlayerControl player)
-    {
-        var code = GetClient(player).FriendCode;
-        return code is "logospruce#7295" //Plana
-        or "soupycloak#8540"//KC
-        or "alphacook#6624"//Nonalus
-        or "freepit#9942"//白糖
-        or "xierbronya#0019";//胡星靖
-    }
+
     static List<SponserInfo> GetSponsersInfo(int lvl)
     {
         return lvl == 1 ? sponserInfoList.sponser : lvl == 2 ? sponserInfoList.contributor : lvl == 3 ? sponserInfoList.admin : sponserInfoList.developer;
     }
+
     static bool IsDev(string code, bool blockHost = false)
     {
         var list = GetSponsersInfo(4);
@@ -5355,6 +5346,7 @@ public class PatchManager
         }
         return list.Any(c => code == c.Friendcode);
     }
+
     static bool IsAdmin(string code)
     {
         if (IsDev(code, false))
@@ -9987,16 +9979,16 @@ public class PatchManager
 
         static readonly Dictionary<uint, Dictionary<string, string>> translationMap = new()
         {
-            [0] = new(),
-            [11] = new(),
-            [13] = new()
+            [0] = [],
+            [11] = [],
+            [13] = []
         };
 
         static readonly Dictionary<uint, Dictionary<string, string>> overrideMap = new()
         {
-            [0] = new(),
-            [11] = new(),
-            [13] = new()
+            [0] = [],
+            [11] = [],
+            [13] = []
         };
 
         static AssetBundle Bundle => bundle ??= AssetBundle.LoadFromMemory(NebulaAPI.AddonAsset.GetResource("others.bundle")!.AsStream()!.ReadBytes());
@@ -10005,10 +9997,13 @@ public class PatchManager
         {
             byte[] xoredBytes = asset.bytes;
             byte[] base64Bytes = new byte[xoredBytes.Length];
+
             for (int i = 0; i < xoredBytes.Length; i++)
                 base64Bytes[i] = (byte)(xoredBytes[i] ^ 0x5A);
+
             string base64 = Encoding.ASCII.GetString(base64Bytes);
             byte[] utf8Bytes = Convert.FromBase64String(base64);
+
             return new MemoryStream(utf8Bytes, writable: false);
         }
 
@@ -10045,48 +10040,26 @@ public class PatchManager
 
             if (IsDev(EOSManager.Instance.FriendCode))
             {
-                if (DevTryGetText(__instance, translationKey, out string? devtext))
+                if (__instance.HasKey(translationKey))
                 {
-                    text = devtext;
                     return true;
                 }
-                else
+            }
+
+            if (__instance == Language.CurrentLanguage)
+            {
+                if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
                 {
-                    if (__instance == Language.CurrentLanguage)
-                    {
-                        if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
-                        {
-                            __result = true;
-                            return false;
-                        }
-                    }
-                    else if (__instance == Language.DefaultLanguage)
-                    {
-                        if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
-                        {
-                            __result = true;
-                            return false;
-                        }
-                    }
+                    __result = true;
+                    return false;
                 }
             }
-            else
+            else if (__instance == Language.DefaultLanguage)
             {
-                if (__instance == Language.CurrentLanguage)
+                if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
                 {
-                    if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
-                    {
-                        __result = true;
-                        return false;
-                    }
-                }
-                else if (__instance == Language.DefaultLanguage)
-                {
-                    if (Lookup(0, translationKey, out text) || Lookup(11, translationKey, out text))
-                    {
-                        __result = true;
-                        return false;
-                    }
+                    __result = true;
+                    return false;
                 }
             }
 
@@ -10096,20 +10069,12 @@ public class PatchManager
         static bool Lookup(uint langId, string key, out string? text)
         {
             text = null;
+
             if (!translationMap.ContainsKey(langId)) return false;
             if (overrideMap[langId].TryGetValue(key, out text)) return true;
             if (translationMap[langId].TryGetValue(key, out text)) return true;
-            return false;
-        }
-        static bool DevTryGetText(Language instance,string? translationKey, [MaybeNullWhen(false)] out string text)
-        {
-            if (translationKey == null)
-            {
-                text = null;
-                return false;
-            }
 
-            return instance.translationMap.TryGetValue(translationKey, out text);
+            return false;
         }
     }
 }
