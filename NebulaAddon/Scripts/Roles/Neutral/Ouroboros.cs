@@ -178,7 +178,7 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                     KillCooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (target, _) =>
                     {
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, Virial.Game.KillParameter.NormalKill);
@@ -230,11 +230,11 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                         ev.Murderer.SetRole(Ouroboros.MyRole, RoleArgumentsForNextOuroboros);
                         foreach (var killerModifier in ev.Murderer.Modifiers)
                         {
-                            if (killerModifier.Modifier is ScarletLover||killerModifier.Modifier is Lover||killerModifier.Modifier is KnightedTarget||killerModifier.Modifier is PMini)
+                            if (killerModifier.Modifier is ScarletLover || killerModifier.Modifier is Lover || killerModifier.Modifier is KnightedTarget || killerModifier.Modifier is PMini)
                             {
                                 continue;
                             }
-                            if (killerModifier.Modifier is Manager)
+                            if (killerModifier.Modifier is Manager || killerModifier.Modifier is LawyerClient || killerModifier.Modifier is ConnoisseurImpurity||killerModifier.Modifier is ConnoisseurGoal)
                             {
                                 continue;
                             }
@@ -246,7 +246,7 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                             {
                                 continue;
                             }
-                            if (modifier.Modifier is ScarletLover||modifier.Modifier is Lover)
+                            if (modifier.Modifier is ScarletLover||modifier.Modifier is Lover||modifier.Modifier is KnightedTarget||modifier.Modifier is Manager||modifier.Modifier is LawyerClient||modifier.Modifier is ConnoisseurImpurity || modifier.Modifier is ConnoisseurGoal)
                             {
                                continue;
                             }

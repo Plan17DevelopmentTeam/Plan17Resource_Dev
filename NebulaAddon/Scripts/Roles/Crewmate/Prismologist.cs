@@ -12,7 +12,7 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
     private const int usesPerRound = 2;
     private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound,PositionPing,PingInterval])
     {
-        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png.png")!.AsImage(115f)!;
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png")!.AsImage(115f)!;
         ConfigurationHolder?.ScheduleAddRelated(() => [Plana.Roles.Impostor.Prismkiller.MyRole.ConfigurationHolder]);
     }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;

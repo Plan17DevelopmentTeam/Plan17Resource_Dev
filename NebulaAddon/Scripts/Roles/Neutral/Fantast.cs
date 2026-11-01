@@ -260,7 +260,7 @@ public class Fantast : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     KillCoolDownOption.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (player, button) =>
                     {
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
@@ -549,7 +549,7 @@ public class Fancy : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
                     KillCoolDownOption.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (player, button) =>
                     {
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);

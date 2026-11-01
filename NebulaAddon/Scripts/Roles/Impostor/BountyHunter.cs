@@ -67,7 +67,7 @@ public class BountyHunter : DefinedSingleAbilityRoleTemplate<BountyHunter.Abilit
                 killButton.Visibility = (button) => !MyPlayer.IsDead;
                 killButton.OnClick = (button) => {
                     var target = killTracker.CurrentTarget;
-                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
                         MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);

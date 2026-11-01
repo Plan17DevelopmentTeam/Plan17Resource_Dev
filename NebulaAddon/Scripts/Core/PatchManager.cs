@@ -63,6 +63,7 @@ using FileInfo = System.IO.FileInfo;
 using IEnumerator = System.Collections.IEnumerator;
 using Vector2 = Virial.Compat.Vector2;
 using Vector3 = Virial.Compat.Vector3;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Plana.Core;
 
@@ -274,6 +275,7 @@ public class PatchManager
             harmony.PatchAll(typeof(LoggerPatchs));
             harmony.PatchAll(typeof(ChatLogSystemPatch));
             harmony.PatchAll(typeof(BlackListSupportPatch));
+            harmony.PatchAll(typeof(LanguageSupportPatch));
             SpeechEater.LoadPatch(harmony);
             Plana.Roles.Complex.Splicer.LoadPatch(harmony);
             Scrambler.LoadPatch(harmony);
@@ -578,6 +580,10 @@ public class PatchManager
         }
         public static List<string> ReadBlacklist()
         {
+            if (!File.Exists(blackListPath))
+            {
+                return new();
+            }
             return File.ReadAllLines(blackListPath).ToList();
         }
     }
@@ -630,7 +636,7 @@ public class PatchManager
                     SetSendKickPlayer.Invoke((AmongUsLLImpl.LocalPlayer.PlayerId, senderPlayerId, Language.Translate("chatcommand.blackmaillist.kickreason")));
                     NebulaManager.Instance.StartDelayAction(1f, () =>
                     {
-                        KickPlayer.Invoke((client.Id, false));
+                        KickPlayer.Invoke((client.Id,true));
                     });
                 }
             }
@@ -3528,19 +3534,16 @@ public class PatchManager
             else
                 Exit();
         }
-        [HarmonyPatch(typeof(ShowIntroPatch), "Prefix"), HarmonyPrefix]
-        public static bool BlockNoSShow(ref bool __result)
+
+        [HarmonyPatch(typeof(ShowIntroPatch), "CoBegin"), HarmonyPrefix]
+        public static bool CoShowIntro(IntroCutscene __instance, ref System.Collections.IEnumerator __result)
         {
-            __result = true;
+            if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return true;
+
+            __result = CoBegin(__instance);
             return false;
         }
-        [HarmonyPatch(typeof(IntroCutscene), "CoBegin"), HarmonyPrefix]
-        public static bool CoShowIntro(IntroCutscene __instance, ref Il2CppSystem.Collections.IEnumerator __result)
-        {
-            NebulaAPI.CurrentGame!.SetGameMode(GeneralConfigurations.CurrentGameMode.InstantiateModule());
-            __result = CoBegin(__instance).WrapToIl2Cpp();
-            return false;
-        }
+
         static System.Collections.IEnumerator CoBegin(IntroCutscene __instance)
         {
             if (BeforeStartGameDisconnectKickAll)
@@ -3597,10 +3600,10 @@ public class PatchManager
                 switch (introInfo.RevealType)
                 {
                     case Virial.Assignable.TeamRevealType.OnlyMe:
-                        shownPlayers = shownPlayers.Where(p => p.AmOwner || introInfo.ShouldShowAdditionally(p.PlayerId));
+                        shownPlayers = shownPlayers.Where(p => p.AmOwner || (introInfo.ShouldShowAdditionally(p.PlayerId)&&!introInfo.ShouldNotShow(p.PlayerId)));
                         break;
                     case Virial.Assignable.TeamRevealType.Teams:
-                        shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role.Role.Team == myInfo.Role.Role.Team || introInfo.ShouldShowAdditionally(p.PlayerId));
+                        shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role.Role.Team == myInfo.Role.Role.Team || (introInfo.ShouldShowAdditionally(p.PlayerId)&&!introInfo.ShouldNotShow(p.PlayerId)));
                         break;
                 }
             }
@@ -3853,56 +3856,39 @@ public class PatchManager
             }
         }
 
-        static RemoteProcess<(string, string)> SetOptionMessageRpc = new RemoteProcess<(string, string)>("SetOptionMessage", (message, _) =>
+        static RemoteProcess<(string, string, string)> SetOptionMessageRpc = new("SetOptionMessage", (message, _) =>
         {
             var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
             var key = message.Item1.Sum(c => c);
-            var item = message.Item2;
+
+            var msgText = BuildOptionMessage(message.Item1, message.Item2, message.Item3);
 
             if (notifier.lastMessageKey == key && notifier.activeMessages.Count > 0)
-                notifier.activeMessages[^1].UpdateMessage(item);
+                notifier.activeMessages[^1].UpdateMessage(msgText);
             else
             {
                 notifier.lastMessageKey = key;
                 LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, UnityEngine.Vector3.zero, Quaternion.identity, notifier.transform);
                 newMessage.transform.localPosition = new Vector3(0f, 0f, -2f);
                 var action = () => notifier.OnMessageDestroy(newMessage);
-                newMessage.SetUp(item, notifier.settingsChangeSprite, notifier.settingsChangeColor, action);
+                newMessage.Text.UseRoleIcon();
+                newMessage.SetUp(msgText, notifier.settingsChangeSprite, notifier.settingsChangeColor, action);
                 notifier.ShiftMessages();
                 notifier.AddMessageToQueue(newMessage);
             }
             AmongUsLLImpl.SoundManagerInstance.PlaySoundImmediate(notifier.settingsChangeSound, false, 1f, 1f, null);
         });
 
-        public static string? GetDisplayColoredName(string LocalizedName)
+        public static string? GetDisplayColoredName(DefinedAssignable? assignable, Color color, AssignmentType? assignmentType = null)
         {
-            if (string.IsNullOrWhiteSpace(LocalizedName))
-                throw new ArgumentException("The key cannot be null.", nameof(LocalizedName));
+            if (assignable == null) return null;
 
-            var roleName = Nebula.Roles.Roles.AllRoles?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName
-                       ?? Nebula.Roles.Roles.AllModifiers?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName
-                       ?? Nebula.Roles.Roles.AllGhostRoles?.FirstOrDefault(role => string.Compare(role.InternalName, LocalizedName) == 0)?.DisplayColoredName;
+            string text = assignable.DisplayName.Color(color);
 
-            if (!string.IsNullOrEmpty(roleName))
-                return roleName;
-            return null;
-        }
-        public static string? GetTypeName(string typeName)
-        {
-            if (string.IsNullOrWhiteSpace(typeName))
-                throw new ArgumentException("The key cannot be null.", nameof(typeName));
+            if (assignmentType == null) 
+                return $"{assignable.GetRoleIconTag()} {text}";
 
-            var postfix = AssignmentType.AllTypes?.FirstOrDefault(type => string.Compare(type.Postfix, typeName) == 0)?.RelatedRole;
-            var postfixRoleColor = postfix?.Color;
-
-            if (postfixRoleColor != null)
-            {
-                var unityColor = postfixRoleColor.Value.ToUnityColor();
-                var hex = ColorUtility.ToHtmlStringRGBA(unityColor);
-
-                return hex;
-            }
-            return null;
+            return $"{assignable.GetRoleIconTag(assignmentType)} {text}";
         }
 
         private static string? ProcessKeyForTranslation(string originalKey)
@@ -3911,32 +3897,39 @@ public class PatchManager
                 return originalKey;
 
             var keyParts = originalKey.Split('.');
-            if (keyParts.Length < 2)
+            if (keyParts.Length < 2 || keyParts == null)
                 return originalKey;
 
-            var firstPart = keyParts.Length > 0 ? keyParts[0] : null;
-            var secondPart = keyParts.Length > 1 ? keyParts[1] : null;
-            var thirdPart = keyParts.Length > 2 ? keyParts[2] : null;
-            var fourthPart = keyParts.Length > 3 ? keyParts[3] : null;
+            var firstPart = keyParts.Length > 0 ? keyParts[0] : "";
+            var secondPart = keyParts.Length > 1 ? keyParts[1] : "";
+            var thirdPart = keyParts.Length > 2 ? keyParts[2] : "";
 
-            if ((firstPart!.Equals("options", StringComparison.Ordinal) && secondPart!.Equals("role", StringComparison.Ordinal))
+            if ((firstPart.Equals("options", StringComparison.Ordinal) && secondPart.Equals("role", StringComparison.Ordinal))
                 || firstPart.Equals("role", StringComparison.Ordinal))
             {
-                var type = GetTypeName(thirdPart!);
-                if (type is not null)
+                var postfix = AssignmentType.AllTypes?.FirstOrDefault(type => type.Postfix == thirdPart);
+
+                DefinedAssignable? assignable = NebulaAPI.Assignables.GetRole(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetModifier(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetGhostRole(secondPart);
+                assignable ??= NebulaAPI.Assignables.GetRole(thirdPart);
+                assignable ??= NebulaAPI.Assignables.GetModifier(thirdPart);
+                assignable ??= NebulaAPI.Assignables.GetGhostRole(thirdPart);
+
+                if (assignable == null) return null;
+
+                if (postfix != null)
                 {
-                    string outkey = $"<color=#{type}>" + Language.Translate($"role.{secondPart}.name") + "</color>";
-                    return outkey + ": ";
+                    return GetDisplayColoredName(assignable, postfix.Color, postfix) + ": ";
                 }
-                else
-                {
-                    var targetKey = firstPart.Equals("role") ? secondPart : thirdPart!;
-                    return GetDisplayColoredName(targetKey!)! + ": ";
-                }
+
+                return GetDisplayColoredName(assignable, assignable.Color) + ": ";
             }
-            else if (secondPart!.Equals("gamemode", StringComparison.Ordinal)) return null;
+            else if (secondPart.Equals("gamemode", StringComparison.Ordinal)) return null;
             else
-                return firstPart.Equals("options") ? Language.Translate($"options.{secondPart}") + ": " : originalKey;
+            {
+                return firstPart.Equals("options") ? Language.Translate($"options.{(secondPart == "general" ? "extra" : secondPart)}") + ": " : originalKey;
+            }
         }
 
         private static string? ProcessKey(string originalKey)
@@ -4021,11 +4014,61 @@ public class PatchManager
             return Language.Translate(originalKey);
         }
 
-        private static string BuildOptionMessage(string key, string valueStr)
+        private static string BuildOptionMessage(string key, string value, string typeName)
         {
+            switch (typeName)
+            {
+                case "int":
+                    if (key.Contains("secondaryChance") || key.Contains("chance"))
+                        value += Language.Translate("options.percentage");
+                    if (key.Contains("gamemode"))
+                    {
+                        if (value == "0")
+                            value = Language.Translate("gamemode.standard");
+                        else if (value == "1")
+                            value = Language.Translate("gamemode.freeplay");
+                        else if (value == "2")
+                            value = Language.Translate("gamemode.aeroguesser");
+                    }
+                    else if (key.Contains("type"))
+                    {
+                        if (value == "0")
+                            value = Language.Translate("options.killCoolDown.type.immediate");
+                        else if (value == "1")
+                            value = Language.Translate("options.killCoolDown.type.relative");
+                        else if (value == "2")
+                            value = Language.Translate("options.killCoolDown.type.ratio");
+                    }
+                    break;
+
+                case "bool":
+                    value = Language.Translate($"BoolOption{value}");
+                    break;
+                case "float":
+                    if (!float.TryParse(value, out var num))
+                    {
+                        break;
+                    }
+
+                    value = FormatFloat(num) + (key switch
+                    {
+                        _ when key.Contains("coolDown", StringComparison.OrdinalIgnoreCase) || key.Contains("duration", StringComparison.OrdinalIgnoreCase) => Language.Translate("options.sec"),
+                        _ when key.Contains("ratio") || key.Contains("Range") => Language.Translate("options.cross"),
+                        _ when key.Contains("roleChance") => Language.Translate("options.percentage"),
+                        _ when key.Contains("type") => "",
+                        _ => ""
+                    });
+                    break;
+            }
+
+            static string FormatFloat(float number) => number.ToString().Contains('.') && number.ToString().Split('.')[1].Length >= 2 
+                ? number.ToString("F2") : number.ToString();
+
             var prefixKey = ProcessKeyForTranslation(key);
-            var translatedKey = ProcessKey(key)!;
-            return $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\"><b>{prefixKey}{translatedKey}</b>{Language.Translate("UpdateOptionMessage")}{valueStr}</font>";
+            var translatedKey = ProcessKey(key);
+            string finalText = $"{prefixKey}{translatedKey}".Bold();
+
+            return $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\">{finalText}{Language.Translate("UpdateOptionMessage")}{value.Bold()}</font>";
         }
 
         public static void IntergerChangeValue(ISharableVariable<int> __instance)
@@ -4035,27 +4078,7 @@ public class PatchManager
                 return;
 
             var valueStr = __instance.CurrentValue.ToString();
-            if (key.Contains("secondaryChance") || key.Contains("chance"))
-                valueStr += Language.Translate("options.percentage");
-            if (key.Contains("gamemode"))
-            {
-                if (valueStr == "0")
-                    valueStr = Language.Translate("gamemode.standard");
-                else if (valueStr == "1")
-                    valueStr = Language.Translate("gamemode.freeplay");
-                else if (valueStr == "2")
-                    valueStr = Language.Translate("gamemode.aeroguesser");
-            }
-            else if (key.Contains("type"))
-            {
-                if (valueStr == "0")
-                    valueStr = Language.Translate("options.killCoolDown.type.immediate");
-                else if (valueStr == "1")
-                    valueStr = Language.Translate("options.killCoolDown.type.relative");
-                else if (valueStr == "2")
-                    valueStr = Language.Translate("options.killCoolDown.type.ratio");
-            }
-            SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, valueStr)));
+            SetOptionMessageRpc.Invoke((key, valueStr, "int"));
         }
 
         public static void BoolChangeValue(BoolConfiguration __instance)
@@ -4068,9 +4091,7 @@ public class PatchManager
                 if (key.Contains("diagnosis"))
                     return;
 
-                var boolStr = __instance ? 1 : 0;
-                var valueStr = Language.Translate($"BoolOption{boolStr}");
-                SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, valueStr)));
+                SetOptionMessageRpc.Invoke((key, (__instance ? 1 : 0).ToString(), "bool"));
             }
             catch (Exception e)
             {
@@ -4084,20 +4105,7 @@ public class PatchManager
             if (key.Contains("diagnosis"))
                 return;
 
-            static string FormatFloat(float number) =>
-                number.ToString().Contains('.') && number.ToString().Split('.')[1].Length >= 2
-                    ? number.ToString("F2")
-                    : number.ToString();
-
-            var value = FormatFloat(__instance.CurrentValue) + (key switch
-            {
-                _ when key.Contains("coolDown", StringComparison.OrdinalIgnoreCase) || key.Contains("duration", StringComparison.OrdinalIgnoreCase) => Language.Translate("options.sec"),
-                _ when key.Contains("ratio") || key.Contains("Range") => Language.Translate("options.cross"),
-                _ when key.Contains("roleChance") => Language.Translate("options.percentage"),
-                _ when key.Contains("type") => "",
-                _ => ""
-            });
-            SetOptionMessageRpc.Invoke((key, BuildOptionMessage(key, value)));
+            SetOptionMessageRpc.Invoke((key, __instance.CurrentValue.ToString(), "float"));
         }
     }
     public static bool NumberOptionInitializePrefix(NumberOption __instance)
@@ -5152,7 +5160,8 @@ public class PatchManager
         bridge.SabotageButton.ToggleVisible(modPlayer?.CanInvokeSabotage ?? false);
         var ventState = GameOperatorManager.Instance?.Run(new Virial.Events.Player.PlayerUpdateVentStateLocalEvent(modPlayer));
         bridge.ImpostorVentButton.ToggleVisible(!flag && ((ventState?.ShouldShowVentButton ?? false) || localPlayer.walkingToVent || localPlayer.inVent));
-        bridge.MapButtonObj.SetActive(NebulaGameManager.Instance.GameMode?.ShowMap ?? true);
+        bridge.MapButtonObj.SetActive(NebulaAPI.CurrentGame?.GameMode?.ShowMap ?? true);
+
         if (modPlayer != null && modPlayer.TryGetModifier<MadmatePLUS.Instance>(out var madmate) && !modPlayer.IsImpostor)
         {
             bridge.SabotageButton.ToggleVisible(madmate != null && MadmatePLUS.CanInvokeSabotageOption);
@@ -5331,19 +5340,12 @@ public class PatchManager
             return null!;
         }
     }
-    static bool IsPlusAdmin(PlayerControl player)
-    {
-        var code = GetClient(player).FriendCode;
-        return code is "logospruce#7295" //Plana
-        or "soupycloak#8540"//KC
-        or "alphacook#6624"//Nonalus
-        or "freepit#9942"//白糖
-        or "xierbronya#0019";//胡星靖
-    }
+
     static List<SponserInfo> GetSponsersInfo(int lvl)
     {
         return lvl == 1 ? sponserInfoList.sponser : lvl == 2 ? sponserInfoList.contributor : lvl == 3 ? sponserInfoList.admin : sponserInfoList.developer;
     }
+
     static bool IsDev(string code, bool blockHost = false)
     {
         var list = GetSponsersInfo(4);
@@ -5353,6 +5355,7 @@ public class PatchManager
         }
         return list.Any(c => code == c.Friendcode);
     }
+
     static bool IsAdmin(string code)
     {
         if (IsDev(code, false))
@@ -5485,17 +5488,33 @@ public class PatchManager
 
     public static void OnChatOpen(ChatController __instance)
     {
+        RegisterIdentityChannels();
         ShowChatHint(__instance);
     }
+
+    internal static bool DarkThemeEnabled => ClientOption.AllOptions[(ClientOption.ClientOptionType)124].Value == 1;
+    internal static UnityEngine.Color DarkChatFieldColor => new Color32(40, 40, 40, byte.MaxValue);
+    internal static string ChatHelpHintSuffix => helpSeen ? "" : " | " + Language.Translate("chatcommand.p17help.hint").Color(new UnityEngine.Color(1f, 1f, 1f, 0.35f));
 
     static void ShowChatHint(ChatController chat)
     {
         if (helpSeen)
         {
             helpHint.GetIfNotNull()?.gameObject.Destroy();
+            helpHint = null;
             return;
         }
-        if (helpHint != null || chat.freeChatField == null) return;
+        if (chat.freeChatField == null) return;
+        if (PrivateChatPatches.ShouldShowChannelBar())
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+            return;
+        }
+        if (helpHint != null)
+        {
+            helpHint.gameObject.SetActive(true);
+            return;
+        }
 
         helpHint = UnityEngine.Object.Instantiate<TextMeshPro>(AmongUsLLImpl.HudManagerInstance.MeetingPrefab.TimerText, chat.freeChatField.transform);
         helpHint.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
@@ -5505,11 +5524,155 @@ public class PatchManager
         helpHint.rectTransform.sizeDelta = new(6f, 0.4496f);
         helpHint.color = new UnityEngine.Color(1f, 1f, 1f, 0.35f);
         helpHint.text = Language.Translate("chatcommand.p17help.hint");
+    }
 
-        GameOperatorManager.Instance?.Subscribe<LobbyDestroyEvent>(ev =>
+    static bool HasIdentityGroup(PlayerControl player, string? code, int channel)
+    {
+        if (player == null) return false;
+        if (channel == 2) return player.AmHost();
+        if (sponserInfoList == null || code == null) return false;
+        switch (channel)
         {
-            helpSeen = true;
-        }, new GameObjectLifespan(helpHint.gameObject));
+            case 1:
+                return GetSponsersInfo(4)?.Any(c => c.Friendcode == code) ?? false;
+            case 3:
+                return GetSponsersInfo(3)?.Any(c => c.Friendcode == code) ?? false;
+            case 4:
+                return GetSponsersInfo(2)?.Any(c => c.Friendcode == code) ?? false;
+            case 5:
+                return GetSponsersInfo(1)?.Any(c => c.Friendcode == code) ?? false;
+        }
+        return false;
+    }
+
+    static bool CanUseSpecialChannelGroup(PlayerControl? player)
+    {
+        if (player == null) return false;
+        if (!player.AmHost() && !IsSponser(player)) return false;
+        return CanSendAdminMessage || IsAdmin(player);
+    }
+
+    static bool CanUseIdentityChannel(int channel)
+    {
+        var manager = PrivateChatManager.Instance;
+        if (manager == null || manager.CurrentGroup != PrivateChatManager.SpecialGroup) return false;
+        var player = AmongUsLLImpl.LocalPlayer;
+        if (player == null) return false;
+        if (!CanUseSpecialChannelGroup(player)) return false;
+        return HasIdentityGroup(player, GetClient(player)?.FriendCode, channel);
+    }
+
+    static string IdentityChannelKey(int channel)
+    {
+        switch (channel)
+        {
+            case 1:
+                return "say.channel.developer";
+            case 2:
+                return "say.channel.host";
+            case 3:
+                return "say.channel.admin";
+            case 4:
+                return "say.channel.contributor";
+            case 5:
+                return "say.channel.sponser";
+        }
+        return "";
+    }
+
+    static Color IdentityChannelColor(int channel)
+    {
+        switch (channel)
+        {
+            case 1:
+                return new Color(232, 31, 99, 255);
+            case 2:
+                return Color.Red;
+            case 3:
+                return Color.Green;
+            case 4:
+            case 5:
+                return Color.Cyan;
+        }
+        return Color.White;
+    }
+
+    static string BuildAutoMessageName(PlayerControl p)
+    {
+        var messagename = ("Special Message Sender:" + p.name).Color(UnityEngine.Color.yellow);
+        if (IsDev(p, true))
+        {
+            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+        }
+        else if (p.AmHost())
+        {
+            messagename = "Host Message".Color(UnityEngine.Color.red);
+        }
+        else if (IsDev(p, false))
+        {
+            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+        }
+        else if (IsAdmin(p))
+        {
+            messagename = ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+        }
+        else if (IsContributor(p))
+        {
+            messagename = ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        else if (IsSponser(p))
+        {
+            messagename = ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        return messagename;
+    }
+
+    static string BuildIdentityMessageName(int channel, PlayerControl p)
+    {
+        switch (channel)
+        {
+            case 1:
+                return ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+            case 2:
+                return "Host Message".Color(UnityEngine.Color.red);
+            case 3:
+                return ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+            case 4:
+                return ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+            case 5:
+                return ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+        }
+        return BuildAutoMessageName(p);
+    }
+
+    static void RegisterIdentityChannels()
+    {
+        var manager = PrivateChatManager.Instance;
+        if (manager == null || manager.AllChannels.Any(c => c.Id is "say.channel.developer")) return;
+        var lifespan = new FunctionalLifespan(() => true);
+        for (var i = 1; i <= 5; i++)
+        {
+            var channel = i;
+            manager.RegisterPublicChannel(
+                IdentityChannelColor(channel),
+                IdentityChannelColor(channel),
+                IdentityChannelKey(channel),
+                Language.Translate(IdentityChannelKey(channel)),
+                lifespan,
+                () => CanUseIdentityChannel(channel),
+                true,
+                message =>
+                {
+                    var p = AmongUsLLImpl.LocalPlayer;
+                    if (p == null) return;
+                    RpcSendChat.Invoke((p.PlayerId, BuildIdentityMessageName(channel, p), message));
+                },
+                PrivateChatManager.SpecialGroup);
+        }
+        if (manager.CurrentChat == null)
+        {
+            manager.ChangeChannel(AmongUsLLImpl.HudManagerBridge.Chat, PrivateChatPatches.chatTeamText, manager.AllChannels.FirstOrDefault(c => c.Id is "public"));
+        }
     }
 
     //static TextMeshPro? chatTeamText;
@@ -5517,8 +5680,24 @@ public class PatchManager
     //static int CurrentChatId, currentIndex;
     public static void ChatUpdate(ChatController __instance)
     {
-        if (!helpSeen && helpHint == null && __instance.IsOpenOrOpening)
+        RegisterIdentityChannels();
+        UpdateSpecialChannelGroup(__instance);
+        if (helpSeen)
+        {
+            if (helpHint != null)
+            {
+                helpHint.gameObject.Destroy();
+                helpHint = null;
+            }
+        }
+        else if (PrivateChatPatches.ShouldShowChannelBar())
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+        }
+        else if (__instance.IsOpenOrOpening)
+        {
             ShowChatHint(__instance);
+        }
 
         __instance.chatBubblePool.Prefab.CastFast<ChatBubble>().TextArea.UseRoleIcon();
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.C))
@@ -5661,10 +5840,45 @@ public class PatchManager
             PDebug.Log(e);
         }*/
     }
+
+    static void UpdateSpecialChannelGroup(ChatController chat)
+    {
+        if (!CanUseSpecialChannelGroup(AmongUsLLImpl.LocalPlayer))
+        {
+            ctrlHoldTime = 0f;
+            ctrlHoldTriggered = false;
+            var chatManager = PrivateChatManager.Instance;
+            if (chatManager != null && chatManager.CurrentGroup == PrivateChatManager.SpecialGroup)
+            {
+                chatManager.RefreshChannel(chat, PrivateChatPatches.chatTeamText);
+            }
+            return;
+        }
+        var control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        if (!control || !chat.IsOpenOrOpening)
+        {
+            ctrlHoldTime = 0f;
+            ctrlHoldTriggered = false;
+            return;
+        }
+        if (ctrlHoldTriggered) return;
+        ctrlHoldTime += Time.unscaledDeltaTime;
+        if (ctrlHoldTime < 1f) return;
+        ctrlHoldTriggered = true;
+        var manager = PrivateChatManager.Instance;
+        if (manager == null) return;
+        if (manager.ToggleSpecialGroup(chat, PrivateChatPatches.chatTeamText))
+        {
+            helpHint.GetIfNotNull()?.gameObject.SetActive(false);
+        }
+    }
+
     public static List<string> ChatHistory = new();
     public static int CurrentHistorySelection = -1;
     static bool helpSeen;
     static TextMeshPro helpHint;
+    static float ctrlHoldTime;
+    static bool ctrlHoldTriggered;
     static readonly string p17Name = "Plan".Color(new Color32(136, 191, 100, 255)) + "17".Color(new Color32(191, 100, 175, 255));
     static void SendChatAs(string name, string chat)
     {
@@ -5718,6 +5932,8 @@ public class PatchManager
             switch (command.ToLower())
             {
                 case "/p17help":
+                    helpSeen = true;
+                    helpHint.GetIfNotNull()?.gameObject.SetActive(false);
                     SendChatAs(p17Name, Language.Translate("chatcommand.p17help.page1"));
                     __instance.freeChatField.Clear();
                     return false;
@@ -5981,32 +6197,9 @@ public class PatchManager
                         }
                         __instance.freeChatField.Clear();
                         var p = AmongUsLLImpl.LocalPlayer;
-                        var messagename = ("Special Message Sender:" + p.name).Color(UnityEngine.Color.yellow);
-                        if (IsDev(p, true))
-                        {
-                            messagename = "Developer Message".Color(new Color32(232, 31, 99, 255));
-                        }
-                        else if (p.AmHost())
-                        {
-                            messagename = "Host Message".Color(UnityEngine.Color.red);
-                        }
-                        else if (IsDev(p, false))
-                        {
-                            messagename = "Developer Message".Color(new Color32(232, 31, 99, 255));
-                        }
-                        else if (IsAdmin(p))
-                        {
-                            messagename = ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
-                        }
-                        else if (IsContributor(p))
-                        {
-                            messagename = ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
-                        }
-                        else if (IsSponser(p))
-                        {
-                            messagename = ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
-                        }
-                        RpcSendChat.Invoke((p.PlayerId, messagename, string.Join(" ", strs.Skip(1))));
+                        var message = string.Join(" ", strs.Skip(1));
+                        var messagename = BuildAutoMessageName(p);
+                        RpcSendChat.Invoke((p.PlayerId, messagename, message));
                         return false;
                     }
                     break;
@@ -9795,16 +9988,16 @@ public class PatchManager
 
         static readonly Dictionary<uint, Dictionary<string, string>> translationMap = new()
         {
-            [0] = new(),
-            [11] = new(),
-            [13] = new()
+            [0] = [],
+            [11] = [],
+            [13] = []
         };
 
         static readonly Dictionary<uint, Dictionary<string, string>> overrideMap = new()
         {
-            [0] = new(),
-            [11] = new(),
-            [13] = new()
+            [0] = [],
+            [11] = [],
+            [13] = []
         };
 
         static AssetBundle Bundle => bundle ??= AssetBundle.LoadFromMemory(NebulaAPI.AddonAsset.GetResource("others.bundle")!.AsStream()!.ReadBytes());
@@ -9813,16 +10006,18 @@ public class PatchManager
         {
             byte[] xoredBytes = asset.bytes;
             byte[] base64Bytes = new byte[xoredBytes.Length];
+
             for (int i = 0; i < xoredBytes.Length; i++)
                 base64Bytes[i] = (byte)(xoredBytes[i] ^ 0x5A);
+
             string base64 = Encoding.ASCII.GetString(base64Bytes);
             byte[] utf8Bytes = Convert.FromBase64String(base64);
+
             return new MemoryStream(utf8Bytes, writable: false);
         }
 
         public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
         {
-            new Harmony("Plan17Language").PatchAll(typeof(LanguageSupportPatch));
             yield return preprocessor.SetLoadingText("Loading Language Data");
 
             foreach (string name in Bundle.GetAllAssetNames())
@@ -9852,6 +10047,14 @@ public class PatchManager
             text = null;
             if (translationKey == null) return true;
 
+            if (IsDev(EOSManager.Instance.FriendCode))
+            {
+                if (__instance.HasKey(translationKey))
+                {
+                    return true;
+                }
+            }
+
             if (__instance == Language.CurrentLanguage)
             {
                 if (Lookup(Language.GetCurrentLanguageId(), translationKey, out text))
@@ -9875,9 +10078,11 @@ public class PatchManager
         static bool Lookup(uint langId, string key, out string? text)
         {
             text = null;
+
             if (!translationMap.ContainsKey(langId)) return false;
             if (overrideMap[langId].TryGetValue(key, out text)) return true;
             if (translationMap[langId].TryGetValue(key, out text)) return true;
+
             return false;
         }
     }

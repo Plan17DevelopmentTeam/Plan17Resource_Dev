@@ -9,7 +9,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
     private const int usesPerRound = 2;
     private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, PullCooldown, VisibleNextRound, PersistentShards, PositionPing, PingInterval])
     {
-        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismkiller.png.png")!.AsImage(115f)!;
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismkiller.png")!.AsImage(115f)!;
         ConfigurationHolder?.ScheduleAddRelated(() => [Plana.Roles.Crewmate.Prismologist.MyRole.ConfigurationHolder]);
     }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
@@ -17,7 +17,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CannotLoad;
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new Ability(player);
     public static readonly FloatConfiguration PrismCooldown = NebulaAPI.Configurations.Configuration("options.role.prismkiller.prismCooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
-    public static readonly FloatConfiguration PullCooldown = NebulaAPI.Configurations.Configuration("options.role.prismkiller.pullCooldown", (0f, 60f, 2.5f), 25f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration PullCooldown = NebulaAPI.Configurations.Configuration("options.role.prismkiller.pullCooldown", (5f, 40f, 5f), 25f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration VisibleNextRound = NebulaAPI.Configurations.Configuration("options.role.prismkiller.visibleNextRound", true);
     public static readonly BoolConfiguration PersistentShards = NebulaAPI.Configurations.Configuration("options.role.prismkiller.persistentShards", true);
     public static readonly BoolConfiguration PositionPing = NebulaAPI.Configurations.Configuration("options.role.prismkiller.positionPing", true);
@@ -91,6 +91,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
                 if (ghost == null) return;
                 RpcPull(target.PlayerId, ghost.Value.x, ghost.Value.y);
                 if (PersistentShards) GlassShard.Spawn(from);
+
                 button.StartCoolDown();
             };
             GameOperatorManager.Instance?.RegisterOnReleased(() =>

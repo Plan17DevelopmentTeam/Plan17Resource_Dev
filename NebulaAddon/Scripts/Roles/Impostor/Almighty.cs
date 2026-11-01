@@ -51,7 +51,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                     mainkillButton.OnClick = (button) =>
                     {
                         var player = myTracker.CurrentTarget;
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(player!, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
@@ -148,7 +148,7 @@ public class Almighty : DefinedSingleAbilityRoleTemplate<Almighty.Ability>, HasC
                     viperkillButton.OnClick = (button) =>
                     {
                         var player = myTracker.CurrentTarget;
-                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                        var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                         if (!(cancelable?.IsCanceled ?? false))
                         {
                             MyPlayer.MurderPlayer(player!, PlayerState.Dissolved, null, KillParameter.WithBlink | KillParameter.WithOverlay | KillParameter.WithAssigningGhostRole | KillParameter.WithDeadBody | KillParameter.WithViperDeadBody, null);

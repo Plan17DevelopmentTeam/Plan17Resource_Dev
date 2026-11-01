@@ -77,7 +77,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                 killButton.OnClick = button=>
                 {
                     var target = killTracker.CurrentTarget;
-                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
                         MyPlayer.MurderPlayer(killTracker.CurrentTarget, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>

@@ -32,7 +32,7 @@ public class EvilAce : DefinedSingleAbilityRoleTemplate<EvilAce.Ability>, HasCit
                 killButton.OnClick = (button) =>
                 {
                     var player = myTracker.CurrentTarget;
-                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, player));
+                    var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, player));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
                         //キャンセルされなければキルを実行する
