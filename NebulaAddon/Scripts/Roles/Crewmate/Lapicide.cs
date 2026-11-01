@@ -1,7 +1,9 @@
 ﻿using static UnityEngine.GraphicsBuffer;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
+
 namespace Plana.Roles.Crewmate;
+
 [NebulaRPCHolder]
 public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
@@ -58,7 +60,7 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
         static Virial.Media.Image? InSkillButton = NebulaAPI.AddonAsset.GetResource("CLapicideInSkill.png")!.AsImage(115f)!;
         static Virial.Media.Image? MeetingInfoIcon = NebulaAPI.AddonAsset.GetResource("LapicideMeetingInfo.png")!.AsImage(135f)!;
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt(), initialSkillCount];
-        public static RemoteProcess<(string, string, string)> ReceiveOverlay = new("LapicideReceiveOverlayRPC", (m, _) =>
+        public static RemoteProcess<(string, string, string)> RegisterOverlay = new("LapicideReceiveOverlayRPC", (m, _) =>
         {
             try
             {
@@ -285,7 +287,7 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
                         if (!confirmedplayers.Contains(selectedDeadPlayer.PlayerId))
                         {
                             confirmedplayers.Add(selectedDeadPlayer.PlayerId);
-                            ReceiveOverlay.Invoke((selectedDeadPlayer.ColoredName, selectedDeadPlayer.Role.DisplayColoredName, selectedDeadPlayer.PlayerState.Text));
+                            RegisterOverlay.Invoke((selectedDeadPlayer.ColoredName, selectedDeadPlayer.Role.DisplayColoredName, selectedDeadPlayer.PlayerState.Text));
                         }
                     }
                     selectedDeadPlayer = null;
