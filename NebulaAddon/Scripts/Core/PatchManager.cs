@@ -580,6 +580,10 @@ public class PatchManager
         }
         public static List<string> ReadBlacklist()
         {
+            if (!File.Exists(blackListPath))
+            {
+                return new();
+            }
             return File.ReadAllLines(blackListPath).ToList();
         }
     }
@@ -632,7 +636,7 @@ public class PatchManager
                     SetSendKickPlayer.Invoke((AmongUsLLImpl.LocalPlayer.PlayerId, senderPlayerId, Language.Translate("chatcommand.blackmaillist.kickreason")));
                     NebulaManager.Instance.StartDelayAction(1f, () =>
                     {
-                        KickPlayer.Invoke((client.Id, false));
+                        KickPlayer.Invoke((client.Id,true));
                     });
                 }
             }
@@ -3596,10 +3600,10 @@ public class PatchManager
                 switch (introInfo.RevealType)
                 {
                     case Virial.Assignable.TeamRevealType.OnlyMe:
-                        shownPlayers = shownPlayers.Where(p => p.AmOwner || introInfo.ShouldShowAdditionally(p.PlayerId));
+                        shownPlayers = shownPlayers.Where(p => p.AmOwner || (introInfo.ShouldShowAdditionally(p.PlayerId)&&!introInfo.ShouldNotShow(p.PlayerId)));
                         break;
                     case Virial.Assignable.TeamRevealType.Teams:
-                        shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role.Role.Team == myInfo.Role.Role.Team || introInfo.ShouldShowAdditionally(p.PlayerId));
+                        shownPlayers = shownPlayers.Where(p => p.GetModInfo()?.Role.Role.Team == myInfo.Role.Role.Team || (introInfo.ShouldShowAdditionally(p.PlayerId)&&!introInfo.ShouldNotShow(p.PlayerId)));
                         break;
                 }
             }
