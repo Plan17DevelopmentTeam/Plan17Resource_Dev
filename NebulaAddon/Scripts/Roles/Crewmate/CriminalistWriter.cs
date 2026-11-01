@@ -1,4 +1,4 @@
-﻿using Nebula.Patches;
+using Nebula.Patches;
 using Nebula.Roles.Scripts;
 using Plana.Core;
 using Plana.Roles.Impostor;
@@ -103,6 +103,9 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
         public int initialSkillCount;
         FlexibleLifespan lifespan;
         Dictionary<byte, SpriteRenderer> highlights;
+        bool isKilled;
+        bool killedCrew;
+
         [Local]
         void OnMeetingStart(MeetingStartEvent ev)
         {
@@ -236,6 +239,16 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
                         if (deadPlayer.MyKiller != null && deadPlayer.MyKiller.PlayerId == alivePlayer.PlayerId)
                         {
                             MyPlayer.MurderPlayer(alivePlayer, PatchManager.CriminologistKill, EventDetails.Kill, KillParameter.MeetingKill,KillCondition.BothAlive);
+
+                            if (!alivePlayer.IsTrueCrewmate)
+                            {
+                                new StaticAchievementToken("criminalistWriter.common2");
+                            }
+                            else
+                            {
+                                killedCrew = true;
+                            }
+
                             PatchManager.RpcSendSkillMessage.Invoke((MyPlayer, Language.Translate("role.criminalistWriter.CorrectSkill").Replace("%PLAYER%", alivePlayer.PlayerName).Replace("%DEADPLAYER%", deadPlayer.PlayerName)));
                         }
                         else
@@ -252,6 +265,8 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
                         }
                         deadPlayer = null;
                         alivePlayer = null;
+                        isKilled = true;
+                        new StaticAchievementToken("criminalistWriter.common1");
                         highlights.Do(entry => entry.Value.enabled = false);
                         if (initialSkillCount <= 0 || meetingCount <= 0)
                         {
@@ -287,6 +302,28 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
             });
             leftRenderer.gameObject.AddComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
         }
+
+        [Local]
+        void OnGameEnd(GameEndEvent ev)
+        {
+            var killed = GamePlayer.AllPlayers.Where(p => p.MyKiller == MyPlayer);
+            bool won = ev.CheckWin(MyPlayer);
+            bool crewWinEnd = ev.EndState.EndCondition == NebulaGameEnds.CrewmateGameEnd.Get();
+
+            if (won && !crewWinEnd && isKilled)
+                new StaticAchievementToken("criminalistWriter.common3");
+
+            if (won && crewWinEnd && killedCrew)
+                new StaticAchievementToken("criminalistWriter.challenge3");
+
+            if (MyPlayer.IsDead && GamePlayer.AllPlayers.Where(p => p.IsImpostor).All(p => p.IsDead && p.PlayerState == PatchManager.CriminologistKill && p.MyKiller == MyPlayer))
+                new StaticAchievementToken("criminalistWriter.challenge2");
+
+            if (killed.Count() >= 5 && killed.Count(p => p.PlayerState == PatchManager.CriminologistKill) >= 2)
+                new StaticAchievementToken("criminalistWriter.challenge1");
+        }
+
+
         bool useskillfail;
     }
 }
