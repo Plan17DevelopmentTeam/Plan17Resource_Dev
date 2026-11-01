@@ -7,10 +7,10 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
 {
     private const float alpha = 0.5f;
     private const int usesPerRound = 2;
-
-    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, PullCooldown, VisibleNextRound, PersistentShards])
+    private Prismkiller() : base("prismkiller", NebulaTeams.ImpostorTeam.Color, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, [PrismCooldown, PullCooldown, VisibleNextRound, PersistentShards, PositionPing, PingInterval])
     {
         ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismkiller.png")!.AsImage(115f)!;
+        ConfigurationHolder?.ScheduleAddRelated(() => [Plana.Roles.Crewmate.Prismologist.MyRole.ConfigurationHolder]);
     }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismkiller.PNG")!.AsImage();
@@ -20,6 +20,8 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
     public static readonly FloatConfiguration PullCooldown = NebulaAPI.Configurations.Configuration("options.role.prismkiller.pullCooldown", (5f, 40f, 5f), 25f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration VisibleNextRound = NebulaAPI.Configurations.Configuration("options.role.prismkiller.visibleNextRound", true);
     public static readonly BoolConfiguration PersistentShards = NebulaAPI.Configurations.Configuration("options.role.prismkiller.persistentShards", true);
+    public static readonly BoolConfiguration PositionPing = NebulaAPI.Configurations.Configuration("options.role.prismkiller.positionPing", true);
+    public static readonly FloatConfiguration PingInterval = NebulaAPI.Configurations.Configuration("options.role.prismkiller.pingInterval", (1f, 30f, 0.5f), 10f, FloatConfigurationDecorator.Second, () => PositionPing.GetValue());
     static public Prismkiller MyRole = new Prismkiller();
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasAbility => true;
@@ -52,6 +54,7 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
         ObjectTracker<GamePlayer>? tracker;
         Dictionary<byte, PlayerDisplay> mirrors = new();
         List<GameObject> shown = new();
+        float pingTimer;
 
         public Ability(GamePlayer player) : base(player)
         {
@@ -111,6 +114,21 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
                 if (p.IsInvisible && p.Role.Role == Plana.Roles.Impostor.NinjaFix.MyRole) continue;
                 var mirrored = Reflect(p.TruePosition.ToUnityVector());
                 if (mirrored != null) shown.Add(ShowPhantom(p, mirrored.Value));
+            }
+            if (PositionPing)
+            {
+                pingTimer -= Time.deltaTime;
+                if (pingTimer <= 0f)
+                {
+                    pingTimer = PingInterval;
+                    var positions = shown.Select(o => (Vector2)o.transform.position).ToArray();
+                    AmongUsUtil.Ping(positions, false, false, 1f, ping =>
+                    {
+                        ping.image.color = MyRole.UnityColor;
+                        ping.transform.localScale *= 0.5f;
+                        ping.image.transform.localScale *= 0.5f;
+                    });
+                }
             }
             foreach (var mirror in mirrors.Values) if (!shown.Contains(mirror.gameObject)) mirror.gameObject.SetActive(false);
             foreach (var mirror in shown)
