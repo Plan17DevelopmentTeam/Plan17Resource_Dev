@@ -104,7 +104,7 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
         FlexibleLifespan lifespan;
         Dictionary<byte, SpriteRenderer> highlights;
         bool isKilled;
-        bool killedCrew;
+        bool killedMadmateCrew;
 
         [Local]
         void OnMeetingStart(MeetingStartEvent ev)
@@ -244,9 +244,9 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
                             {
                                 new StaticAchievementToken("criminalistWriter.common2");
                             }
-                            else
+                            if (alivePlayer.Role.Role.IsMadmate&&alivePlayer.Role.Role.Category == RoleCategory.CrewmateRole)
                             {
-                                killedCrew = true;
+                                killedMadmateCrew = true;
                             }
 
                             PatchManager.RpcSendSkillMessage.Invoke((MyPlayer, Language.Translate("role.criminalistWriter.CorrectSkill").Replace("%PLAYER%", alivePlayer.PlayerName).Replace("%DEADPLAYER%", deadPlayer.PlayerName)));
@@ -313,13 +313,13 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
             if (won && !crewWinEnd && isKilled)
                 new StaticAchievementToken("criminalistWriter.common3");
 
-            if (won && crewWinEnd && killedCrew)
+            if (won && crewWinEnd && killedMadmateCrew)
                 new StaticAchievementToken("criminalistWriter.challenge3");
 
             if (MyPlayer.IsDead && GamePlayer.AllPlayers.Where(p => p.IsImpostor).All(p => p.IsDead && p.PlayerState == PatchManager.CriminologistKill && p.MyKiller == MyPlayer))
                 new StaticAchievementToken("criminalistWriter.challenge2");
 
-            if (killed.Count() >= 5 && killed.Count(p => p.PlayerState == PatchManager.CriminologistKill) >= 2)
+            if (won && crewWinEnd&&killed.Count() >= 5 && killed.Count(p => p.PlayerState == PatchManager.CriminologistKill) >= 2)
                 new StaticAchievementToken("criminalistWriter.challenge1");
         }
 
