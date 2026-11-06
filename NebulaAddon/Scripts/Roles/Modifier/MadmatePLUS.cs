@@ -226,9 +226,9 @@ public class MadmatePLUS : DefinedAllocatableModifierTemplate, HasCitation, Defi
             {
                 return;
             }
-            GamePlayer[] voters = MeetingHudExtension.LastVotedForMap
-                .Where(entry => entry.Value == MyPlayer.PlayerId && entry.Key != MyPlayer.PlayerId)
-                .Select(entry => NebulaGameManager.Instance!.GetPlayer(entry.Key)).ToArray()!;
+            GamePlayer[] voters = MeetingHudExtension.GetLastSwappedVotedFor()
+                .Where(entry => entry.voteTo == MyPlayer.PlayerId && entry.voter != MyPlayer.PlayerId)
+                .Select(entry => NebulaGameManager.Instance!.GetPlayer(entry.voter)).ToArray()!;
 
             void Embroil()
             {

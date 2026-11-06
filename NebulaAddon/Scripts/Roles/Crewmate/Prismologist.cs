@@ -10,9 +10,10 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
     private const float extendLen=100f;
     private const float alpha=0.2f;
     private const int usesPerRound = 2;
-    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound])
+    private Prismologist() : base("prismologist", Prism.special ? new Virial.Color(255,155,0) : new Virial.Color(40,255,218), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [PrismCooldown,VisibleNextRound,PositionPing,PingInterval])
     {
-        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png.png")!.AsImage(115f)!;
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/SpecialPrismologist.png")!.AsImage(115f)!;
+        ConfigurationHolder?.ScheduleAddRelated(() => [Plana.Roles.Impostor.Prismkiller.MyRole.ConfigurationHolder]);
     }
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Prismologist.PNG")!.AsImage();
@@ -20,6 +21,8 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new Ability(player);
     public static readonly FloatConfiguration PrismCooldown = NebulaAPI.Configurations.Configuration("options.role.prismologist.prismCooldown", (0f, 60f, 2.5f), 20f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration VisibleNextRound = NebulaAPI.Configurations.Configuration("options.role.prismologist.visibleNextRound", true);
+    public static readonly BoolConfiguration PositionPing = NebulaAPI.Configurations.Configuration("options.role.prismologist.positionPing", true);
+    public static readonly FloatConfiguration PingInterval = NebulaAPI.Configurations.Configuration("options.role.prismologist.pingInterval", (1f, 30f, 0.5f), 10f, FloatConfigurationDecorator.Second, () => PositionPing.GetValue());
     static public Prismologist MyRole = new Prismologist();
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasAbility => true;
@@ -39,6 +42,7 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
         ModAbilityButton? placeButton;
         Dictionary<byte, PlayerDisplay> mirrors = new();
         List<GameObject> shown = new();
+        float pingTimer;
 
         public Ability(GamePlayer player) : base(player)
         {
@@ -73,6 +77,21 @@ public class Prismologist : DefinedSingleAbilityRoleTemplate<Prismologist.Abilit
                 if (p.IsInvisible && p.Role.Role == Plana.Roles.Impostor.NinjaFix.MyRole) continue;
                 var mirrored = Reflect(p.TruePosition.ToUnityVector());
                 if (mirrored != null) shown.Add(ShowMirror(p, mirrored.Value));
+            }
+            if (PositionPing)
+            {
+                pingTimer -= Time.deltaTime;
+                if (pingTimer <= 0f)
+                {
+                    pingTimer = PingInterval;
+                    var positions = shown.Select(o => (Vector2)o.transform.position).ToArray();
+                    AmongUsUtil.Ping(positions, false, false, 1f, ping =>
+                    {
+                        ping.image.color = MyRole.UnityColor;
+                        ping.transform.localScale *= 0.5f;
+                        ping.image.transform.localScale *= 0.5f;
+                    });
+                }
             }
             foreach (var mirror in mirrors.Values) if (!shown.Contains(mirror.gameObject)) mirror.gameObject.SetActive(false);
             foreach (var mirror in shown)
