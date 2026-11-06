@@ -3536,11 +3536,11 @@ public class PatchManager
         }
 
         [HarmonyPatch(typeof(ShowIntroPatch), "CoBegin"), HarmonyPrefix]
-        public static bool CoShowIntro(IntroCutscene __instance, ref System.Collections.IEnumerator __result)
+        public static bool CoShowIntro(IntroCutscene __0, ref System.Collections.IEnumerator __result)
         {
             if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return true;
-
-            __result = CoBegin(__instance);
+            if (__0 == null) return true;
+            __result = CoBegin(__0);
             return false;
         }
 
@@ -5599,10 +5599,10 @@ public class PatchManager
 
     static string BuildAutoMessageName(PlayerControl p)
     {
-        var messagename = ("Special Message Sender:" + p.name).Color(UnityEngine.Color.yellow);
+        var messagename = ("Special:" + p.name).Color(UnityEngine.Color.yellow);
         if (IsDev(p, true))
         {
-            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+            messagename = ("Developer:" + p.name).Color(new Color32(232, 31, 99, 255));
         }
         else if (p.AmHost())
         {
@@ -5610,19 +5610,19 @@ public class PatchManager
         }
         else if (IsDev(p, false))
         {
-            messagename = ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+            messagename = ("Developer:" + p.name).Color(new Color32(232, 31, 99, 255));
         }
         else if (IsAdmin(p))
         {
-            messagename = ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+            messagename = ("Admin:" + p.name).Color(UnityEngine.Color.green);
         }
         else if (IsContributor(p))
         {
-            messagename = ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+            messagename = ("Contributor:" + p.name).Color(UnityEngine.Color.cyan);
         }
         else if (IsSponser(p))
         {
-            messagename = ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+            messagename = ("Sponser:" + p.name).Color(UnityEngine.Color.cyan);
         }
         return messagename;
     }
@@ -5632,15 +5632,15 @@ public class PatchManager
         switch (channel)
         {
             case 1:
-                return ("Developer Message Sender:" + p.name).Color(new Color32(232, 31, 99, 255));
+                return ("Developer:" + p.name).Color(new Color32(232, 31, 99, 255));
             case 2:
                 return "Host Message".Color(UnityEngine.Color.red);
             case 3:
-                return ("Admin Message Sender:" + p.name).Color(UnityEngine.Color.green);
+                return ("Admin:" + p.name).Color(UnityEngine.Color.green);
             case 4:
-                return ("Contributor Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+                return ("Contributor:" + p.name).Color(UnityEngine.Color.cyan);
             case 5:
-                return ("Sponser Message Sender:" + p.name).Color(UnityEngine.Color.cyan);
+                return ("Sponser:" + p.name).Color(UnityEngine.Color.cyan);
         }
         return BuildAutoMessageName(p);
     }
@@ -5700,6 +5700,8 @@ public class PatchManager
         }
 
         __instance.chatBubblePool.Prefab.CastFast<ChatBubble>().TextArea.UseRoleIcon();
+        var chatField = __instance.freeChatField;
+        if (chatField != null && chatField.textArea != null) chatField.textArea.AllowPaste = false;
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.C))
             ClipboardHelper.PutClipboardString(__instance.freeChatField.textArea.text);
 
@@ -5710,6 +5712,34 @@ public class PatchManager
         {
             ClipboardHelper.PutClipboardString(__instance.freeChatField.textArea.text);
             __instance.freeChatField.textArea.SetText("");
+        }
+        if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetMouseButtonDown(2))
+        {
+            var uiCamera = AmongUsLLImpl.HudManagerInstance.UICamera;
+            if (uiCamera == null) return;
+            foreach (var child in __instance.chatBubblePool.activeChildren)
+            {
+                var bubble = child.CastFast<ChatBubble>();
+                if (bubble == null || bubble.TextArea == null || !bubble.gameObject.activeInHierarchy) continue;
+                var over = false;
+                foreach (var renderer in bubble.GetComponentsInChildren<Renderer>())
+                {
+                    var bounds = renderer.bounds;
+                    var min = uiCamera.WorldToScreenPoint(new UnityEngine.Vector3(bounds.min.x, bounds.min.y, bounds.center.z));
+                    var max = uiCamera.WorldToScreenPoint(new UnityEngine.Vector3(bounds.max.x, bounds.max.y, bounds.center.z));
+                    var rect = Rect.MinMaxRect(UnityEngine.Mathf.Min(min.x, max.x), UnityEngine.Mathf.Min(min.y, max.y), UnityEngine.Mathf.Max(min.x, max.x), UnityEngine.Mathf.Max(min.y, max.y));
+                    if (rect.Contains(Input.mousePosition))
+                    {
+                        over = true;
+                        break;
+                    }
+                }
+                if (!over) continue;
+                var chatText = bubble.TextArea.GetParsedText();
+                if (string.IsNullOrEmpty(chatText)) chatText = bubble.TextArea.text;
+                ClipboardHelper.PutClipboardString(chatText);
+                break;
+            }
         }
         if (Input.GetKeyDown(KeyCode.UpArrow) && ChatHistory.Count > 0)
         {
