@@ -100,7 +100,7 @@
   "developer": [
     {
       "Friendcode": "soupycloak#8540",
-      "name": "KC"
+      "name": "KCQ"
     },
     {
       "Friendcode": "logospruce#7295",
@@ -113,6 +113,14 @@
     {
       "Friendcode": "primebling#0938",
       "name": "饭团"
+    },
+    {
+      "Friendcode": "serenanya#0721",
+      "name": "忆梦"
+    },
+    {
+      "Friendcode": "eggantique#7155",
+      "name": "Water"
     }
   ],
   "admin": [
@@ -126,14 +134,6 @@
     }
   ],
   "contributor": [
-    {
-      "Friendcode": "serenanya#0721",
-      "name": "忆梦"
-    },
-    {
-      "Friendcode": "eggantique#7155",
-      "name": "Water"
-    },
     {
       "Friendcode": "veilbliss#5198",
       "name": "凌寒冰歌"
