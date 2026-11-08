@@ -71,6 +71,10 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
             {
                 return false;
             }
+            return IsDreamweaver(p);
+        }
+        public static bool IsDreamweaver(GamePlayer p)
+        {
             if (p.Role is Dreamweaver.Instance || p.Modifiers.Any(m => m is DreamweaverModifier.Instance))
             {
                 return true;
@@ -203,7 +207,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         [OnlyMyPlayer]
         void OnCheckExtraWin(PlayerCheckExtraWinEvent ev)
         {
-            List<GamePlayer> list = NebulaGameManager.Instance.AllPlayerInfo.Where(Insomniacs.Instance.CheckAliveDreamweaver).ToList();
+            List<GamePlayer> list = NebulaGameManager.Instance.AllPlayerInfo.Where(Insomniacs.Instance.IsDreamweaver).ToList();
             if (list.Any(p => ev.WinnersMask.Test(p)))
             {
                 ev.SetWin(true);

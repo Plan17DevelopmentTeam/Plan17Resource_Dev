@@ -3316,6 +3316,17 @@ public class PatchManager
 
             var nebulaScreen = MetaScreen.GenerateScreen(new(5f, 4.5f), nebulaTab.transform, new(0f, -0.28f, -10f), false, false, false);
             int nebulaOptionPage = 0;
+            string OptionText(ClientOption option)
+            {
+                try
+                {
+                    return option.DisplayName + " : " + option.DisplayValue;
+                }
+                catch
+                {
+                    return option.DisplayName + " : ???";
+                }
+            }
             void SetNebulaWidget()
             {
                 var buttonAttr = new TextAttributeOld(TextAttributeOld.BoldAttr) { Size = new Vector2(1.45f, 0.22f) };
@@ -3336,7 +3347,7 @@ public class PatchManager
                     SetNebulaWidget();
                 }, buttonAttr)
                 {
-                    RawText = option.DisplayName + " : " + option.DisplayValue,
+                    RawText = OptionText(option),
                     PostBuilder = (button, _, _) =>
                     {
                         var detail = option.DisplayDetail;
@@ -5548,6 +5559,7 @@ public class PatchManager
     static bool CanUseSpecialChannelGroup(PlayerControl? player)
     {
         if (player == null) return false;
+        if (!AmongUsLLImpl.LobbyInstance.AsBoolFast() && !MeetingHud.Instance.AsBoolFast()) return false;
         if (!player.AmHost() && !IsSponser(player)) return false;
         return CanSendAdminMessage || IsAdmin(player);
     }
@@ -5875,8 +5887,8 @@ public class PatchManager
     {
         if (!CanUseSpecialChannelGroup(AmongUsLLImpl.LocalPlayer))
         {
-            ctrlHoldTime = 0f;
-            ctrlHoldTriggered = false;
+            altHoldTime = 0f;
+            altHoldTriggered = false;
             var chatManager = PrivateChatManager.Instance;
             if (chatManager != null && chatManager.CurrentGroup == PrivateChatManager.SpecialGroup)
             {
@@ -5884,17 +5896,17 @@ public class PatchManager
             }
             return;
         }
-        var control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-        if (!control || !chat.IsOpenOrOpening)
+        var alt = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+        if (!alt || !chat.IsOpenOrOpening)
         {
-            ctrlHoldTime = 0f;
-            ctrlHoldTriggered = false;
+            altHoldTime = 0f;
+            altHoldTriggered = false;
             return;
         }
-        if (ctrlHoldTriggered) return;
-        ctrlHoldTime += Time.unscaledDeltaTime;
-        if (ctrlHoldTime < 1f) return;
-        ctrlHoldTriggered = true;
+        if (altHoldTriggered) return;
+        altHoldTime += Time.unscaledDeltaTime;
+        if (altHoldTime < 1f) return;
+        altHoldTriggered = true;
         var manager = PrivateChatManager.Instance;
         if (manager == null) return;
         if (manager.ToggleSpecialGroup(chat, PrivateChatPatches.chatTeamText))
@@ -5907,8 +5919,8 @@ public class PatchManager
     public static int CurrentHistorySelection = -1;
     static bool helpSeen;
     static TextMeshPro helpHint;
-    static float ctrlHoldTime;
-    static bool ctrlHoldTriggered;
+    static float altHoldTime;
+    static bool altHoldTriggered;
     static readonly string p17Name = "Plan".Color(new Color32(136, 191, 100, 255)) + "17".Color(new Color32(191, 100, 175, 255));
     static void SendChatAs(string name, string chat)
     {
@@ -6217,11 +6229,12 @@ public class PatchManager
                 case "/say":
                     if (strs.Length > 1)
                     {
-                        if (!AmongUsLLImpl.AmongUsClientInstance.AmHost && !IsSponser(AmongUsLLImpl.LocalPlayer))
+                        if (!AmongUsLLImpl.LobbyInstance.AsBoolFast() && !MeetingHud.Instance.AsBoolFast())
                         {
-                            break;
+                            __instance.freeChatField.Clear();
+                            return false;
                         }
-                        if (!CanSendAdminMessage && !IsAdmin(AmongUsLLImpl.LocalPlayer))
+                        if (!CanUseSpecialChannelGroup(AmongUsLLImpl.LocalPlayer))
                         {
                             break;
                         }
@@ -6614,7 +6627,7 @@ public class PatchManager
         {
             GameOperatorManager.Instance.Subscribe<GameUpdateEvent>(ev =>
             {
-                if (!message.Item2.IsDead)
+                if (CanHighlightShieldTarget(message.Item1, message.Item2))
                 {
                     HighlightHelpers.SetHighlight(message.Item1, new Color(0, 221, 255, 255));
                 }
@@ -6640,7 +6653,7 @@ public class PatchManager
         {
             GameOperatorManager.Instance.Subscribe<GameUpdateEvent>(ev =>
             {
-                if (!message.Item2.IsDead)
+                if (CanHighlightShieldTarget(message.Item1, message.Item2))
                 {
                     HighlightHelpers.SetHighlight(message.Item1, new Color(0, 221, 255, 255));
                 }
@@ -6674,6 +6687,16 @@ public class PatchManager
             }
         }
     });
+
+    static bool CanHighlightShieldTarget(GamePlayer shielded, GamePlayer doctor)
+    {
+        // 被保护者が死亡・切断している、または描画用オブジェクトが既に破棄されていると
+        // HighlightHelpers.SetHighlight が Renderer.get_material() で NRE を出し続ける。
+        if (shielded == null || shielded.IsDead || doctor.IsDead) return false;
+        if (!shielded.VanillaPlayer.AsBoolFast(out var vanillaPlayer)) return false;
+        var body = vanillaPlayer.cosmetics?.currentBodySprite;
+        return body != null && body.BodySprite.AsBoolFast();
+    }
     public static RemoteProcess<(GamePlayer sender, string message)> RpcSendSkillMessage = new("SendSkillMessage", (m, _) =>
     {
         if (m.sender.AmOwner || NebulaGameManager.Instance.CanSeeAllInfo)
