@@ -8,28 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="GuessCommand\**" />
-    <Compile Remove="Nebula-Public-master\**" />
-    <Compile Remove="Plan17Resourcesv2.11.1\**" />
-    <Compile Remove="script\**" />
-    <Compile Remove="UchuAddon ver-β1.3.2a\**" />
-    <Compile Remove="usefulmodi-v1.25\**" />
-    <EmbeddedResource Remove="GuessCommand\**" />
-    <EmbeddedResource Remove="Nebula-Public-master\**" />
-    <EmbeddedResource Remove="Plan17Resourcesv2.11.1\**" />
-    <EmbeddedResource Remove="Scripts\**" />
-    <EmbeddedResource Remove="script\**" />
-    <EmbeddedResource Remove="UchuAddon ver-β1.3.2a\**" />
-    <EmbeddedResource Remove="usefulmodi-v1.25\**" />
-    <None Remove="GuessCommand\**" />
-    <None Remove="Nebula-Public-master\**" />
-    <None Remove="Plan17Resourcesv2.11.1\**" />
-    <None Remove="script\**" />
-    <None Remove="UchuAddon ver-β1.3.2a\**" />
-    <None Remove="usefulmodi-v1.25\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -1,3 +1,4 @@
+using Il2CppSystem.Reflection;
 using Nebula.Roles.Complex;
 using Plana.Core;
 using Plana.Roles.Crewmate;
@@ -148,26 +149,26 @@ public class Doomsayer : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
         [Local]
         void OnMeetingStart(MeetingStartEvent ev)
         {
-            GameObject? binder = UnityHelper.CreateObject("DoomsayerWinCheck", MeetingHud.Instance.SkipVoteButton.transform.parent, MeetingHud.Instance.SkipVoteButton.transform.localPosition, null);
-            GameOperatorManager? instance = GameOperatorManager.Instance;
+            var timerText = MeetingHud.Instance.TimerText;
 
-            instance?.Subscribe<GameUpdateEvent>(delegate (GameUpdateEvent ev)
-                {
-                    binder.gameObject.SetActive(!this.MyPlayer.IsDead && MeetingHud.Instance.CurrentState == MeetingHud.MeetingStates.NotVoted);
-                }, new GameObjectLifespan(binder));
+            timerText.transform.localScale = new Virial.Compat.Vector3(0.9f, 0.9f, 1f);
+            timerText.transform.localPosition = new Virial.Compat.Vector3(2.25f, -2.03f);
 
-            TextMeshPro? countText = UnityEngine.Object.Instantiate<TextMeshPro>(MeetingHud.Instance.TitleText, binder.transform);
-            countText.gameObject.SetActive(true);
-            countText.gameObject.GetComponent<TextTranslatorTMP>().enabled = false;
-            countText.alignment = TextAlignmentOptions.Center;
-            countText.transform.localPosition = new UnityEngine.Vector3(2.59f, 0f);
-            countText.color = Palette.White;
-            countText.transform.localScale *= 0.8f;
-            countText.text = Language.Translate("role.doomsayer.winleftguess") + ":" + leftguess;
+            var progressText = UnityEngine.Object.Instantiate(timerText, timerText.transform.parent);
+            progressText.gameObject.name = "DoomsayerProgressText";
+            progressText.GetComponent<TextTranslatorTMP>().Destroy();
+            progressText.transform.localPosition = new Virial.Compat.Vector3(2.25f, -2.25f, -1f);
+            progressText.text = Language.Translate("role.doomsayer.winleftguess") + ":" + leftguess;
+
+            GameOperatorManager.Instance?.Subscribe<GameUpdateEvent>(delegate (GameUpdateEvent ev)
+            {
+                progressText.gameObject.SetActive(!this.MyPlayer.IsDead && MeetingHud.Instance.CurrentState == MeetingHud.MeetingStates.NotVoted);
+            }, new GameObjectLifespan(progressText.gameObject));
+
             GuesserSystem.DoomsayerOnMeetingStart(delegate
             {
                 leftguess--;
-                countText.text = Language.Translate("role.doomsayer.winleftguess") + ":" + Mathn.Max(leftguess, 0);
+                progressText.text = Language.Translate("role.doomsayer.winleftguess") + ":" + Mathn.Max(leftguess, 0);
                 if (leftguess <= 0)
                 {
                     NebulaGameManager? instance = NebulaGameManager.Instance;

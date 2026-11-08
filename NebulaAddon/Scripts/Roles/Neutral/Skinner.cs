@@ -22,10 +22,10 @@ public class Skinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     public class Instance : RuntimeAssignableTemplate, RuntimeRole
     {
         public static readonly GameEnd SkinnerWin = NebulaAPI.Preprocessor!.CreateEnd("skinner", MyRole.RoleColor, 254);
-        public static readonly ExtraWin ScarletLoverExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("scarletex", ((DefinedAssignable)Scarlet.MyRole).Color);
-        public static readonly ExtraWin JackalExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("jackalex", ((DefinedAssignable)Jackal.MyRole).Color);
-        public static readonly ExtraWin KnightedExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("knightedTargetEx", ((DefinedAssignable)Knighted.MyRole).Color);
-        public static readonly ExtraWin GhostExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("ghostextrawin",Virial.Color.White);
+        public static readonly ExtraWin ScarletLoverExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("scarletEx", Scarlet.MyRole.Color);
+        public static readonly ExtraWin JackalExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("jackalEx", Jackal.MyRole.Color);
+        public static readonly ExtraWin CavalierExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("masterEx", Cavalier.MyRole.Color);
+        public static readonly ExtraWin GhostExtraWin = NebulaAPI.Preprocessor!.CreateExtraWin("ghostEx",Virial.Color.White);
         DefinedRole RuntimeRole.Role => MyRole;
         [EventPriority(EventPriority.VeryLow)]
         void OnCheckGameEnd(EndCriteriaMetEvent ev)
@@ -81,9 +81,9 @@ public class Skinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     }
                     try
                     {
-                        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.Role is Knighted.Instance&&p.TryGetModifier<SkinnerDog.Instance>(out var d)))
+                        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.Role is Cavalier.Instance&&p.TryGetModifier<SkinnerDog.Instance>(out var d)))
                         {
-                            NebulaGameManager.Instance.AllPlayerInfo.Where(p => p.TryGetModifier<KnightedTarget.Instance>(out var m)).Do(k =>
+                            NebulaGameManager.Instance.AllPlayerInfo.Where(p => p.TryGetModifier<Master.Instance>(out var m)).Do(k =>
                             {
                                 mask.Add(k);
                             });
@@ -123,10 +123,7 @@ public class Skinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                                 }
                                 return false;
                             });
-                            if (ps != null)
-                            {
-                                ps.Do(p=>mask.Add(p));
-                            }
+                            ps?.Do(p=>mask.Add(p));
                         }
                     }
                     catch (Exception e)
@@ -145,7 +142,7 @@ public class Skinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         }
         void OnGameEnd(GameEndEvent ev)
         {
-            if (ev.EndState.EndCondition==SkinnerWin)
+            if (ev.EndState.EndCondition == SkinnerWin)
             {
                 try
                 {
@@ -177,17 +174,17 @@ public class Skinner : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                 }
                 try
                 {
-                    if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.Role is Knighted.Instance&&p.TryGetModifier<SkinnerDog.Instance>(out var do2)))
+                    if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.Role is Cavalier.Instance&&p.TryGetModifier<SkinnerDog.Instance>(out var do2)))
                     {
-                        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.TryGetModifier<KnightedTarget.Instance>(out var m)))
+                        if (NebulaGameManager.Instance.AllPlayerInfo.Any(p => p.TryGetModifier<Master.Instance>(out var m)))
                         {
-                            (ev.EndState.ExtraWins as EditableBitMask<ExtraWin>).Add(KnightedExtraWin);
+                            (ev.EndState.ExtraWins as EditableBitMask<ExtraWin>).Add(CavalierExtraWin);
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    PDebug.Log("KnightedAddWinnerFail Error:" + e.ToString());
+                    PDebug.Log("CavalierAddWinnerFail Error:" + e.ToString());
                 }
                 try
                 {
@@ -442,7 +439,7 @@ public class SkinnerDog : DefinedModifierTemplate, DefinedModifier, DefinedAssig
         [Local, OnlyMyPlayer]
         void OnDead(PlayerDieEvent ev)
         {
-            if (MyPlayer.Role is Knighted.Instance||MyPlayer.Role is Lawyer.Instance)
+            if (MyPlayer.Role is Cavalier.Instance||MyPlayer.Role is Lawyer.Instance)
             {
                 MyPlayer.RemoveModifier(SkinnerDog.MyRole);
             }

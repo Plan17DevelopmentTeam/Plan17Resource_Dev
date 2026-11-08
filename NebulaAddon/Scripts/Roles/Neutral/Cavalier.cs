@@ -1,35 +1,34 @@
-﻿
-using Nebula.VoiceChat;
-using Plana.Roles.Crewmate;
-using Plana.Roles.Neutral;
+﻿using Plana.Roles.Neutral;
 using UnityEngine.UIElements;
 
 namespace Nebula.Roles.Crewmate;
 
 [NebulaRPCHolder]
-public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignableDocument
+public class Cavalier : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignableDocument
 {
-    public static Team MyTeam = new Team("teams.knighted", new Virial.Color(255, 178, 70), TeamRevealType.OnlyMe);
-    private Knighted() : base("knighted", new(255, 178, 70), RoleCategory.NeutralRole, MyTeam, [NumOfKILLOption, KILLCooldownOption, CanKillTarget, TargetCanKillKnighted])
+    public static Team MyTeam = new Team("teams.cavalier", new Virial.Color(255, 178, 70), TeamRevealType.OnlyMe);
+    private Cavalier() : base("cavalier", new(255, 178, 70), RoleCategory.NeutralRole, MyTeam, [NumOfKillOption, KillCooldownOption, CanKillMaster, MasterCanKillCavalier])
     {
-        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/Knighted.png")!.AsImage(115f)!;
+        ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/Cavalier.png")!.AsImage(115f)!;
     }
     Citation? HasCitation.Citation { get { return PCitations.PlanaANDKC; } }
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player);
-    public static IntegerConfiguration NumOfKILLOption = NebulaAPI.Configurations.Configuration("options.role.knighted.op1", new ValueTuple<int, int>(1, 15), 1, null, null, null);
-    public static FloatConfiguration KILLCooldownOption = NebulaAPI.Configurations.Configuration("options.role.knighted.op2", new ValueTuple<float,float,float>(10f,45f,2.5f),25f, FloatConfigurationDecorator.Second, null, null);
-    public static BoolConfiguration CanKillTarget = NebulaAPI.Configurations.Configuration("options.role.knighted.op3", false);
-    public static BoolConfiguration TargetCanKillKnighted = NebulaAPI.Configurations.Configuration("options.role.knighted.op4", false);
-    static public Knighted MyRole = new Knighted();
+
+    public static IntegerConfiguration NumOfKillOption = NebulaAPI.Configurations.Configuration("options.role.cavalier.numOfkill", new ValueTuple<int, int>(1, 15), 1, null, null, null);
+    public static FloatConfiguration KillCooldownOption = NebulaAPI.Configurations.Configuration("options.role.cavalier.killCooldown", new ValueTuple<float,float,float>(10f,45f,2.5f),25f, FloatConfigurationDecorator.Second, null, null);
+    public static BoolConfiguration CanKillMaster= NebulaAPI.Configurations.Configuration("options.role.cavalier.canKillMaster", false);
+    public static BoolConfiguration MasterCanKillCavalier = NebulaAPI.Configurations.Configuration("options.role.cavalier.masterCanKillCavalier", false);
+
+    static public Cavalier MyRole = new Cavalier();
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasAbility => true;
     IEnumerable<AssignableDocumentImage> IAssignableDocument.GetDocumentImages()
     {
-        yield return new(Instance.selectImage!, "role.knighted.ability.Select");
+        yield return new(Instance.selectImage!, "role.cavalier.ability.Select");
     }
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
-        yield return new("%NUM%", NumOfKILLOption.GetValue().ToString());
+        yield return new("%NUM%", NumOfKillOption.GetValue().ToString());
     }
     public class Instance(GamePlayer player) : RuntimeAssignableTemplate(player), RuntimeRole, RuntimeAssignable, ILifespan, IReleasable, IBindPlayer, IGameOperator
     {
@@ -78,7 +77,7 @@ public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignab
             if (ev.WinnersMask.Test(selectPlayer) && !MyPlayer.TryGetModifier<SkinnerDog.Instance>(out var m))
             {
                 ev.SetWin(true);
-                ev.ExtraWinMask.Add(PatchManager.knightedExtra);
+                ev.ExtraWinMask.Add(PatchManager.cavalierExtra);
             }
         }
         private void OnGameEnd(GameEndEvent ev)
@@ -93,23 +92,23 @@ public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignab
                 {
                     if (selectPlayer.IsImpostor)
                     {
-                        new StaticAchievementToken("knighted.common2");
+                        new StaticAchievementToken("cavalier.common2");
                     }
                     if (selectPlayer.TryGetModifier<Lover.Instance>(out var lover))
                     {
-                        new StaticAchievementToken("knighted.common3");
+                        new StaticAchievementToken("cavalier.common3");
                     }
                     if (selectPlayerEarlyDead&&!MyPlayer.IsDead)
                     {
-                        new StaticAchievementToken("knighted.common4");
+                        new StaticAchievementToken("cavalier.common4");
                     }
                     if (killSelectPlayer)
                     {
-                        new StaticAchievementToken("knighted.another1");
+                        new StaticAchievementToken("cavalier.another1");
                     }
                     if (selectPlayer.Role.Role.Category == RoleCategory.NeutralRole)
                     {
-                        new StaticAchievementToken("knighted.challenge1");
+                        new StaticAchievementToken("cavalier.challenge1");
                     }
                 }
             }
@@ -131,19 +130,21 @@ public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignab
             if (AmOwner)
             {
                 selectPlayer = null;
+
                 if (NebulaGameManager.Instance!=null)
                 {
-                    var p = NebulaGameManager.Instance.AllPlayerInfo.FirstOrDefault(p => p.TryGetModifier<KnightedTarget.Instance>(out var m));
+                    var p = NebulaGameManager.Instance.AllPlayerInfo.FirstOrDefault(p => p.TryGetModifier<Master.Instance>(out var m));
                     if (p!=null)
                     {
                         selectPlayer = p;
                     }
                 }
-                int leftKill = NumOfKILLOption;
+
+                int leftKill = NumOfKillOption;
                 SpriteRenderer? lockSprite = null;
                 ObjectTracker<GamePlayer> killTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, ObjectTrackers.KillablePredicate(base.MyPlayer), null, false, false);
                 killButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Kill, null);
-                killButton.Availability = (button) => killTracker.CurrentTarget != null && selectPlayer != null &&(CanKillTarget||killTracker.CurrentTarget != selectPlayer) && this.MyPlayer.CanMove && lockSprite == null;
+                killButton.Availability = (button) => killTracker.CurrentTarget != null && selectPlayer != null &&(CanKillMaster||killTracker.CurrentTarget != selectPlayer) && this.MyPlayer.CanMove && lockSprite == null;
                 killButton.Visibility = (button) => !base.MyPlayer.IsDead && leftKill > 0;
                 killButton.ShowUsesIcon(2, leftKill.ToString());
                 try
@@ -182,18 +183,20 @@ public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignab
                     }
                     if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                 };
-                killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KILLCooldownOption).SetAsKillCoolTimer().Start(null);
+                killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldownOption).SetAsKillCoolTimer().Start(null);
                 killButton.StartCoolDown();
                 killButton.SetLabel("kill");
                 selectbutton = NebulaAPI.Modules.AbilityButton(this,false, false, 0, false).BindKey(Virial.Compat.VirtualKeyInput.Ability, null);
                 selectbutton.Availability = (button) => killTracker.CurrentTarget != null && this.MyPlayer.CanMove;
                 selectbutton.Visibility = (button) => !base.MyPlayer.IsDead && selectPlayer == null;
-                (selectbutton as Virial.Components.ModAbilityButton).SetImage(selectImage);
-                selectbutton.OnClick = delegate (ModAbilityButton button)
+                (selectbutton as Virial.Components.ModAbilityButton).SetImage(selectImage!);
+                selectbutton.OnClick = button =>
                 {
-                    new StaticAchievementToken("knighted.common1");
-                    SetPlayer.Invoke(killTracker.CurrentTarget);
-                    selectPlayer?.AddModifier(KnightedTarget.MyRole, null);
+                    if (killTracker.CurrentTarget == null) return;
+
+                    new StaticAchievementToken("cavalier.common1");
+                    SetPlayer.Invoke((MyPlayer, killTracker.CurrentTarget));
+                    selectPlayer?.AddModifier(Master.MyRole, null);
                     if (lockSprite)
                     {
                         UnityEngine.Object.Destroy(lockSprite);
@@ -204,26 +207,26 @@ public class Knighted : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssignab
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(killButton.GetKillButtonLike());
             }
         }
-        public static GamePlayer? selectPlayer;
-        static RemoteProcess<GamePlayer> SetPlayer = new RemoteProcess<Virial.Game.Player>("KnightedSetPlayer", delegate (GamePlayer
-            message, bool _)
+
+        public GamePlayer? selectPlayer;
+
+        static RemoteProcess<(GamePlayer, GamePlayer)> SetPlayer = new("KnightedSetPlayer", (message, _) =>
         {
-            selectPlayer = message;
+            if (message.Item1.Role is Instance instance)
+            {
+                instance.selectPlayer = message.Item2;
+            }
         });
-        private void OnGameStarted(GameStartEvent ev)
-        {
-            selectPlayer = null;
-        }
     }
 }
-public class KnightedTarget : DefinedModifierTemplate, DefinedModifier, DefinedAssignable, IRoleID, RuntimeAssignableGenerator<RuntimeModifier>,HasCitation, IAssignableDocument
+public class Master : DefinedModifierTemplate, DefinedModifier, DefinedAssignable, IRoleID, RuntimeAssignableGenerator<RuntimeModifier>,HasCitation, IAssignableDocument
 {
-    private KnightedTarget() : base("knightedtarget",  new(255, 178, 70),null,true,()=>false)
+    private Master() : base("master",  new(255, 178, 70),null,true,()=>false)
     {
     }
     Citation? HasCitation.Citation { get { return PCitations.PlanaANDKC; } }
 
-    static public KnightedTarget MyRole = new KnightedTarget();
+    static public Master MyRole = new Master();
     bool IAssignableDocument.HasTips => true;
     RuntimeModifier RuntimeAssignableGenerator<RuntimeModifier>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player);
     [NebulaRPCHolder]
@@ -233,6 +236,7 @@ public class KnightedTarget : DefinedModifierTemplate, DefinedModifier, DefinedA
         public Instance(GamePlayer player) : base(player)
         {
         }
+
         void RuntimeAssignable.OnActivated()
         {
             if (base.AmOwner)
@@ -240,10 +244,11 @@ public class KnightedTarget : DefinedModifierTemplate, DefinedModifier, DefinedA
                 AmongUsUtil.PlayCustomFlash(MyRole.RoleColor, 0f, 0.25f, 0.4f, 0f);
             }
         }
+
         [OnlyMyPlayer]
         private void OnCheckCanKill(PlayerCheckCanKillLocalEvent ev)
         {
-            if (!Knighted.TargetCanKillKnighted&&ev.Target.Role is Knighted.Instance)
+            if (!Cavalier.MasterCanKillCavalier && ev.Target.Role is Cavalier.Instance instance && instance.selectPlayer == MyPlayer)
             {
                 ev.SetAsCannotKillBasically();
             }
@@ -254,7 +259,7 @@ public class KnightedTarget : DefinedModifierTemplate, DefinedModifier, DefinedA
         {
             if (AmOwner)
             {
-                if (ev.Player != null && ev.Player.Role is Knighted.Instance)
+                if (ev.Player != null && ev.Player.Role is Cavalier.Instance)
                 {
                     ev.Color = new Virial.Color?(MyRole.RoleColor);
                 }

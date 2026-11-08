@@ -4967,9 +4967,9 @@ public class PatchManager
             SpectreExArrowList.Add(new TrackingArrowAbility(player, 0f, Knight.MyRole.RoleColor, false).Register(__instance));
             return;
         }
-        if (player.Role.Role is Knighted)
+        if (player.Role.Role is Cavalier)
         {
-            SpectreExArrowList.Add(new TrackingArrowAbility(player, 0f, Knighted.MyRole.RoleColor, false).Register(__instance));
+            SpectreExArrowList.Add(new TrackingArrowAbility(player, 0f, Cavalier.MyRole.RoleColor, false).Register(__instance));
             return;
         }
         if (player.Role.Role is Yandere)
@@ -5266,7 +5266,7 @@ public class PatchManager
         RandomCFPlayer = message;
     });
     static string v() { return p(new int[][] { new int[] { 2 }, new int[] { 94 }, new int[] { 118 }, new int[] { 214 }, new int[] { 158 }, new int[] { 170 }, new int[] { 1 }, new int[] { 48 } }, new int[][] { new int[] { 106, 42, 2, 166, 237, 144, 46, 31, 111, 46, 88, 166, 242 }, new int[] { 99, 48, 71, 225, 176, 222, 110, 64, 45, 63, 6, 191 } }); }
-    public static ExtraWin tunnyExtra = NebulaAPI.Preprocessor!.CreateExtraWin("tunny", Tunny.MyRole.RoleColor), knightedExtra = NebulaAPI.Preprocessor!.CreateExtraWin("knighted", Knighted.MyRole.RoleColor);
+    public static ExtraWin tunnyExtra = NebulaAPI.Preprocessor!.CreateExtraWin("tunny", Tunny.MyRole.RoleColor), cavalierExtra = NebulaAPI.Preprocessor!.CreateExtraWin("cavalier", Cavalier.MyRole.RoleColor);
     public static void CoShow(MeetingCalledAnimation __instance)
     {
         if (ClientOption.GetValue((ClientOption.ClientOptionType)123) == 1)
@@ -6406,6 +6406,13 @@ public class PatchManager
                 case "nogame":
                     game.TriggerGameEnd(NebulaGameEnds.NoGameEnd, GameEndReason.Special);
                     break;
+                default:
+
+                    var end = GameEnd.AllEndConditions.FirstOrDefault(e => e.ImmutableId == s);
+                    if (end == null) break;
+
+                    game.TriggerGameEnd(end, GameEndReason.SpecialSituation);
+                    break;
             }
         }
     });
@@ -7239,6 +7246,7 @@ public class PatchManager
                 foreach (var m in player.Modifiers) yield return m;
             }
         }
+
         public static string GetModifierInfo(string text, IEnumerable<RuntimeModifier> modifiers)
         {
             var newtext = text;
@@ -7253,6 +7261,7 @@ public class PatchManager
             }
             return newtext;
         }
+
         [HarmonyPatch(typeof(ExileControllerBeginPatch), "Postfix"), HarmonyPostfix]
         public static void NosExilePos(ref ExileController.InitProperties init)
         {

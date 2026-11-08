@@ -67,10 +67,6 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
         RoleTaskType RuntimeRole.TaskType => RoleTaskType.NoTask;
         public static bool CheckAliveDreamweaver(GamePlayer p)
         {
-            if (p.IsDead)
-            {
-                return false;
-            }
             if (p.Role is Dreamweaver.Instance || p.Modifiers.Any(m => m is DreamweaverModifier.Instance))
             {
                 return true;
@@ -363,7 +359,6 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
         {
             return isShort ? this.GetRoleIconTagSmall() + lastRoleName : Language.Translate("role.insomniacs.prefix").Color(MyRole.Color) + lastRoleName;
         }
-
 
         void OnSheriffKill(SheriffCheckKillEvent ev)
         {

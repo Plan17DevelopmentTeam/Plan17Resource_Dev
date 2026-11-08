@@ -230,7 +230,7 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                         ev.Murderer.SetRole(Ouroboros.MyRole, RoleArgumentsForNextOuroboros);
                         foreach (var killerModifier in ev.Murderer.Modifiers)
                         {
-                            if (killerModifier.Modifier is ScarletLover || killerModifier.Modifier is Lover || killerModifier.Modifier is KnightedTarget || killerModifier.Modifier is PMini)
+                            if (killerModifier.Modifier is ScarletLover || killerModifier.Modifier is Lover || killerModifier.Modifier is Master.Instance || killerModifier.Modifier is PMini)
                             {
                                 continue;
                             }
@@ -246,7 +246,7 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                             {
                                 continue;
                             }
-                            if (modifier.Modifier is ScarletLover||modifier.Modifier is Lover||modifier.Modifier is KnightedTarget||modifier.Modifier is Manager||modifier.Modifier is LawyerClient||modifier.Modifier is ConnoisseurImpurity || modifier.Modifier is ConnoisseurGoal)
+                            if (modifier.Modifier is ScarletLover||modifier.Modifier is Lover||modifier.Modifier is Master || modifier.Modifier is Manager||modifier.Modifier is LawyerClient||modifier.Modifier is ConnoisseurImpurity || modifier.Modifier is ConnoisseurGoal)
                             {
                                continue;
                             }
