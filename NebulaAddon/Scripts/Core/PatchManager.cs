@@ -5360,7 +5360,7 @@ public class PatchManager
     static bool IsDev(string code, bool blockHost = false)
     {
         var list = GetSponsersInfo(4);
-        if (blockHost && list.Any(i => i.name == "KC" && i.Friendcode == code))
+        if (blockHost && list.Any(i => i.name == "KCQ" && i.Friendcode == code))
         {
             return false;
         }
