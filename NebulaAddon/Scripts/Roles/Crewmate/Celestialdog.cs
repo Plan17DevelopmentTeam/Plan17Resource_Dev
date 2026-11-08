@@ -212,14 +212,12 @@ public class Celestialdog : DefinedRoleTemplate, HasCitation, DefinedRole, Defin
             var player = GamePlayer.GetPlayer(message.playerId);
             if (player == null) return;
 
-            var role = player.Role;
-            if (role is Celestialdog.Instance instance)
-            {
-                if (message.enter)
-                    instance.EnterDogState();
-                else
-                    instance.ExitDogState();
-            }
+            if (GameOperatorManager.Instance?.AllOperators.FirstOrDefault(o => o is Celestialdog.Instance i && i.MyPlayer == player) is not Celestialdog.Instance instance) return;
+
+            if (message.enter)
+                instance.EnterDogState();
+            else
+                instance.ExitDogState();
         }
         );
         public class DogState : EquipableAbility,IGameOperator

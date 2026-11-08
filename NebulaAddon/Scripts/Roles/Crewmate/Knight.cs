@@ -1,18 +1,10 @@
-﻿using Plana.Core;
-using Plana.Roles.Modifier;
-using static UnityEngine.GraphicsBuffer;
-
-namespace Plana.Roles.Crewmate;
+﻿namespace Plana.Roles.Crewmate;
 
 public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
     private Knight() : base("knight", Virial.Color.Gray, RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [NumOfKILLOption, KILLCooldownOption, CanKillHidingPlayerOption, SealAbilityUntilReportingDeadBodiesOption, OnPlayerDeadUnlockKill])
     {
-        IConfigurationHolder configurationHolder = base.ConfigurationHolder;
-        if (configurationHolder != null)
-        {
-            configurationHolder.AddTags(new ConfigurationTag[] { ConfigurationTags.TagBeginner });
-        }
+        base.ConfigurationHolder?.AddTags([ConfigurationTags.TagBeginner]);
     }
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CanLoadToMadmate;
     Citation? HasCitation.Citation { get { return PCitations.TOHE; } }
@@ -25,7 +17,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
     bool IAssignableDocument.HasTips => true;
     public override Knight.Ability CreateAbility(GamePlayer player, int[] arguments)
     {
-        return new Knight.Ability(player, arguments.GetAsBool(0), arguments.Get<int>(1, NumOfKILLOption));
+        return new Knight.Ability(player, arguments.GetAsBool(0), arguments.Get(1, NumOfKILLOption));
     }
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
@@ -41,7 +33,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
             leftKill = shots;
             if (AmOwner)
             {
-                SpriteRenderer lockSprite = null;
+                SpriteRenderer? lockSprite = null;
                 ObjectTracker<GamePlayer> killTracker = ObjectTrackers.ForPlayer(this, null, base.MyPlayer, ObjectTrackers.KillablePredicate(base.MyPlayer), null, CanKillHidingPlayerOption, false);
                 killButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false).BindKey(base.MyPlayer.IsCrewmate ? Virial.Compat.VirtualKeyInput.Kill : Virial.Compat.VirtualKeyInput.Ability, null).SetAsUsurpableButton(this);
                 killButton.Availability = (button) => killTracker.CurrentTarget != null && this.MyPlayer.CanMove && lockSprite == null;
@@ -62,7 +54,7 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                             {
                                 if (lockSprite != null && DestroyableSingleton<HudManager>.InstanceExists && DestroyableSingleton<HudManager>.Instance.ReportButton.canInteract)
                                 {
-                                    (killButton as ModAbilityButtonImpl).PlayFlashOnce();
+                                    (killButton as ModAbilityButtonImpl)?.PlayFlashOnce();
                                     UnityEngine.Object.Destroy(lockSprite.gameObject);
                                     lockSprite = null;
                                 }
@@ -77,30 +69,34 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                 killButton.OnClick = button=>
                 {
                     var target = killTracker.CurrentTarget;
+                    if (target == null) return;
+
                     var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEvent(MyPlayer, target));
                     if (!(cancelable?.IsCanceled ?? false))
                     {
-                        MyPlayer.MurderPlayer(killTracker.CurrentTarget, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>
+                        MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill, (result) =>
                         {
                             if (result == KillResult.Kill)
                             {
                                 new StaticAchievementToken("knight.common1");
-                                if (killTracker.CurrentTarget.Role.Role.Category != RoleCategory.CrewmateRole)
+
+                                if (target.Role.Role.Category != RoleCategory.CrewmateRole)
                                 {
                                     new StaticAchievementToken("knight.common2");
                                 }
-                                if (killTracker.CurrentTarget.Role is Sheriff.Ability)
+                                if (target.Role is Sheriff.Ability)
                                 {
                                     new StaticAchievementToken("knight.another1");
                                 }
-                                if (killTracker.CurrentTarget.Role is Mayor.Ability)
+                                if (target.Role is Mayor.Ability)
                                 {
                                     new StaticAchievementToken("knight.another2");
                                 }
-                                if (killTracker.CurrentTarget.Role is Sidekick.Instance || killTracker.CurrentTarget.Modifiers.Any((RuntimeModifier m) => m is SidekickModifier))
+                                if (target.Role is Sidekick.Instance || target.Modifiers.Any(m => m is SidekickModifier))
                                 {
                                     new StaticAchievementToken("knight.challenge1");
                                 }
+
                                 leftKill--;
                                 killButton.UpdateUsesIcon(leftKill.ToString());
                             }
@@ -111,11 +107,11 @@ public class Knight : DefinedSingleAbilityRoleTemplate<Knight.Ability>, DefinedR
                 killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KILLCooldownOption).SetAsKillCoolTimer().Start(null);
                 killButton.StartCoolDown();
                 killButton.SetLabel("kill");
-                (killButton as ModAbilityButtonImpl)!.OnMeeting = (button) =>
+                killButton.OnMeeting = (button) =>
                 {
                     if (lockSprite!=null)
                     {
-                        if (NebulaGameManager.Instance!.AllPlayerInfo.Any((Player p) => p.IsDead))
+                        if (NebulaGameManager.Instance!.AllPlayerInfo.Any(p => p.IsDead))
                         {
                             UnityEngine.Object.Destroy(lockSprite.gameObject);
                             lockSprite = null;
