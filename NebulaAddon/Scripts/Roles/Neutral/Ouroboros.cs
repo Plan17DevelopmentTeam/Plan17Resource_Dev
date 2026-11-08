@@ -230,7 +230,7 @@ public class Ouroboros : DefinedRoleTemplate, HasCitation, DefinedRole, IAssigna
                         ev.Murderer.SetRole(Ouroboros.MyRole, RoleArgumentsForNextOuroboros);
                         foreach (var killerModifier in ev.Murderer.Modifiers)
                         {
-                            if (killerModifier.Modifier is ScarletLover || killerModifier.Modifier is Lover || killerModifier.Modifier is Master.Instance || killerModifier.Modifier is PMini)
+                            if (killerModifier.Modifier is ScarletLover || killerModifier.Modifier is Lover || killerModifier.Modifier is Master || killerModifier.Modifier is PMini)
                             {
                                 continue;
                             }
