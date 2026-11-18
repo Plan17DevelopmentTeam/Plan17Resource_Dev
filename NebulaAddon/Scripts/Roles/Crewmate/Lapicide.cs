@@ -1,4 +1,5 @@
-﻿using static UnityEngine.GraphicsBuffer;
+﻿using Plana.Roles.Modifier;
+using static UnityEngine.GraphicsBuffer;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
@@ -99,6 +100,8 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
         private List<byte> deadplayers = new List<byte>();
         private List<byte> confirmedplayers = new List<byte>();
         private List<byte>knownplayers= new List<byte>();
+        public int specialDeadReasonPlayerNum=0;
+        AchievementToken<int> achChallenge1Token = new("lapicide.challenge1", 0, (val, _) => val);
         [Local]
         void ReflectRoleName(PlayerSetFakeRoleNameEvent ev)
         {
@@ -130,6 +133,15 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
             {
                 deadplayers.Add(ev.Player.PlayerId); 
                 RpcUpdateStatus.Invoke((MyPlayer, ev.Player.PlayerId));
+            }
+        }
+        [Local]
+        void OnReport(ReportDeadBodyEvent ev)
+        {
+            if (ev.Reporter==MyPlayer && ev.Reported != null && MyPlayer.Modifiers.Any((RuntimeModifier m)=> m.Modifier.LocalizedName.Contains("seluch")) && !deadplayers.Contains(ev.Reported.PlayerId))
+            {
+                deadplayers.Add(ev.Reported.PlayerId);
+                RpcUpdateStatus.Invoke((MyPlayer, ev.Reported.PlayerId));
             }
         }
         GUIWidget IPlayerAbility.ProgressWidget
@@ -268,6 +280,8 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
                 }
                 if (selectedDeadPlayer != null)
                 {
+                    new StaticAchievementToken("lapicide.common1");
+                    achChallenge1Token.Value++;
                     if (confirmedplayers.Contains(selectedDeadPlayer.PlayerId))
                     {
                         return;
@@ -288,6 +302,14 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
                         {
                             confirmedplayers.Add(selectedDeadPlayer.PlayerId);
                             RegisterOverlay.Invoke((selectedDeadPlayer.ColoredName, selectedDeadPlayer.Role.DisplayColoredName, selectedDeadPlayer.PlayerState.Text));
+                            if (selectedDeadPlayer.PlayerState !=PlayerState.Dead&& selectedDeadPlayer.PlayerState != PlayerState.Exiled&& selectedDeadPlayer.PlayerState != PlayerState.Disconnected&&selectedDeadPlayer.PlayerState!=PlayerState.Guessed&&selectedDeadPlayer.PlayerState!=PlayerState.Misguessed)
+                            {
+                                specialDeadReasonPlayerNum++;
+                            }
+                            if (specialDeadReasonPlayerNum >= 2)
+                            {
+                                new StaticAchievementToken("lapicide.challenge2");
+                            }
                         }
                     }
                     selectedDeadPlayer = null;
@@ -327,6 +349,14 @@ public class Lapicide : DefinedSingleAbilityRoleTemplate<Lapicide.Ability>, HasC
                 }
             });
             leftRenderer.gameObject.AddComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.6f);
+        }
+        [Local]
+        void OnGameEnd(GameEndEvent ev)
+        {
+            if(MyPlayer.IsDead&& confirmedplayers.Count>=3)
+            {
+                new StaticAchievementToken("lapicide.challenge3");
+            }
         }
     }
 }

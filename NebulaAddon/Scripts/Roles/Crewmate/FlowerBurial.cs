@@ -24,6 +24,8 @@ public class FlowerBurial : DefinedSingleAbilityRoleTemplate<FlowerBurial.Abilit
         public static Image MeetingInfoIcon = NebulaAPI.AddonAsset.GetResource("flowerBurialMeetingInfo.png")!.AsImage(135f)!;
         Dictionary<byte,string> CheckedDeadbodies = new();
         List<Flower> flowers = new();
+        AchievementToken<int> achChallenge1Token = new("flowerburial.challenge1", 0, (val, _) => val);
+        int CheckedBodyCount = 0;
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
         static readonly RemoteProcess<ValueTuple<GamePlayer, byte,string>> RpcUpdateFlowerBurial = new RemoteProcess<ValueTuple<GamePlayer, byte,string>>("UpdateFlowerBurial", (m, _) =>
         {
@@ -54,6 +56,7 @@ public class FlowerBurial : DefinedSingleAbilityRoleTemplate<FlowerBurial.Abilit
         }
         public Ability(GamePlayer player, bool isUsurped) : base(player, isUsurped)
         {
+            int count = CheckedDeadbodies.Count;
             if (AmOwner)
             {
                 flowers = new();
@@ -65,6 +68,7 @@ public class FlowerBurial : DefinedSingleAbilityRoleTemplate<FlowerBurial.Abilit
                     placeButton.UpdateUsesIcon((flowersPlaceNum - flowers.Count).ToString());
                     placeButton.StartCoolDown();
                     EffectCircle.SpawnEffectCircle(AmongUsLLImpl.ShipStatusInstance.transform, MyPlayer.TruePosition.ToUnityVector(), MyRole.RoleColor, new float?(FlowerRatio), null, true);
+                    new StaticAchievementToken("flowerburial.common1");
                 };
                 /*(placeButton as ModAbilityButtonImpl)!.OnMeeting = _ =>
                 {
@@ -119,6 +123,8 @@ public class FlowerBurial : DefinedSingleAbilityRoleTemplate<FlowerBurial.Abilit
                     if (!CheckedDeadbodies.ContainsKey(d.ParentId) && MathHelpers.Distance(burial.Position, d.TruePosition) <= FlowerRatio)
                     {
                         RpcUpdateFlowerBurial.Invoke((MyPlayer, d.ParentId, AmongUsUtil.GetRoomName(d.TruePosition)));
+                        CheckedBodyCount++;
+                        achChallenge1Token.Value++;
                         if (!burial.Shared)
                         {
                             burial.Shared = true;
@@ -153,6 +159,16 @@ public class FlowerBurial : DefinedSingleAbilityRoleTemplate<FlowerBurial.Abilit
                     ]), MeetingInfoIcon, MyRole.RoleColor, false);
             }
             CheckedDeadbodies.Clear();
+        }
+        [Local]
+        void OnGameEnd(GameEndEvent ev)
+        {
+            bool crewWinEnd = ev.EndState.EndCondition == NebulaGameEnds.CrewmateGameEnd.Get();
+            bool won = ev.CheckWin(MyPlayer);
+            if (crewWinEnd && won && CheckedBodyCount >= 3)
+            {
+                new StaticAchievementToken("flowerburial.challenge2");
+            }
         }
     }
     [NebulaPreprocess(PreprocessPhase.PostRoles)]
