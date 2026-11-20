@@ -1,4 +1,5 @@
 using Plana.Roles.Modifier;
+using Plana.Roles.Neutral;
 using Virial.Helpers;
 
 namespace Plana.Roles.Crewmate;
@@ -226,8 +227,8 @@ public class Sommelier : DefinedSingleAbilityRoleTemplate<Sommelier.Ability>, Ha
             if (IsUsurped) return;
 
             var markedIds = playerIcons.Where(CheckMarked).Select(p => p.Item1);
-            var inRoles = GamePlayer.AllPlayers.Where(p => markedIds.Contains(p.PlayerId)&&!p.IsDead).Select(p => p?.Role?.Role).NotNull().ToArray();
-            var outRoles = GamePlayer.AllPlayers.Where(p => !markedIds.Contains(p.PlayerId)&&!p.IsDead&&p!=MyRole).Select(p => p?.Role?.Role).NotNull().ToArray();
+            var inRoles = GamePlayer.AllPlayers.Where(p => markedIds.Contains(p.PlayerId)&&!p.IsDead).Select(p => p?.Role?.Role).NotNull().Where(r => r is not GameMaster && r is not Violator).ToArray();
+            var outRoles = GamePlayer.AllPlayers.Where(p => !markedIds.Contains(p.PlayerId)&&!p.IsDead&&p!=MyRole).Select(p => p?.Role?.Role).NotNull().Where(r => r is not GameMaster && r is not Violator).ToArray();
             var rnd = System.Random.Shared;
 
             string inText = Language.Translate("role.sommelier.ui.roleInResult");

@@ -16,7 +16,7 @@ namespace Plana.Roles.Crewmate;
 public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWriter.Ability>, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
 
-    private CriminalistWriter() : base("criminalistWriter",new(60,91,163), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [MeetingSkillCount,EveryMeetingSkillCount,UseSkillFailCanUseNextSkill,LightRange]) 
+    private CriminalistWriter() : base("criminalistWriter",new(60,91,163), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [MeetingSkillCount,EveryMeetingSkillCount,UseSkillFailCanUseNextSkill,DeadPlayerPairOnce,LightRange]) 
     {
         ConfigurationHolder!.Illustration = NebulaAPI.AddonAsset.GetResource("RoleImages/CriminalistWriter.png")!.AsImage(115f)!;
     }
@@ -24,6 +24,7 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
     static IntegerConfiguration MeetingSkillCount = NebulaAPI.Configurations.Configuration("options.role.criminalistWriter.meetingskillcount", (1,20),3);
     static IntegerConfiguration EveryMeetingSkillCount= NebulaAPI.Configurations.Configuration("options.role.criminalistWriter.everymeetingskillcount", (1,20),3);
     static BoolConfiguration UseSkillFailCanUseNextSkill = NebulaAPI.Configurations.Configuration("options.role.criminalistWriter.useskillfailcanusenextskill", true);
+    static BoolConfiguration DeadPlayerPairOnce = NebulaAPI.Configurations.Configuration("options.role.criminalistWriter.deadplayerpaironce", true);
     static FloatConfiguration LightRange= NebulaAPI.Configurations.Configuration("options.role.criminalistWriter.lightrange", (-1f,5f,0.125f),1.75f,FloatConfigurationDecorator.Ratio);
     Citation? HasCitation.Citation => PCitations.PlanaANDKC;
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CanLoadToMadmate;
@@ -103,6 +104,7 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
         public int initialSkillCount;
         FlexibleLifespan lifespan;
         Dictionary<byte, SpriteRenderer> highlights;
+        HashSet<byte> pairedDeadPlayers = new();
         bool isKilled;
         bool killedMadmateCrew;
 
@@ -143,6 +145,7 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
                         PDebug.Log("DPlayer select");
                         if (nPlayer.IsDead)
                         {
+                            if (DeadPlayerPairOnce && pairedDeadPlayers.Contains(player)) return;
                             deadPlayer = nPlayer;
                             var highlight = highlights[player];
                             highlight.color = UnityEngine.Color.red;
@@ -263,6 +266,7 @@ public class CriminalistWriter : DefinedSingleAbilityRoleTemplate<CriminalistWri
                                 MeetingHudExtension.ReflectVotingMask();
                             }
                         }
+                        if (DeadPlayerPairOnce) pairedDeadPlayers.Add(deadPlayer.PlayerId);
                         deadPlayer = null;
                         alivePlayer = null;
                         isKilled = true;
