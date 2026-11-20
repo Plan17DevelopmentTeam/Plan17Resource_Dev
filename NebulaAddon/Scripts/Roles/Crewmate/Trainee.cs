@@ -12,7 +12,7 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleSmallIcon/Trainee.png")!.AsImage();
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player, Nebula.Roles.Roles.GetRole(arguments.Get(0, -1)), arguments.Skip(1).ToArray());
     static private readonly ValueConfiguration<int> LearningOfOption = NebulaAPI.Configurations.Configuration("options.role.trainee.learningOf", ["options.role.trainee.learningOf.afterSeconds", "options.role.trainee.learningOf.afterRounds", "options.role.trainee.learningOf.both"], 2);
-    static private readonly FloatConfiguration LearningCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.trainee.cooldown", (30f, 360f, 30f), 60f, FloatConfigurationDecorator.Second, () => LearningOfOption.GetValue() == 0 || LearningOfOption.GetValue() == 2);
+    static private readonly FloatConfiguration LearningCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.trainee.cooldown", (30f, 120f, 10f), 40f, FloatConfigurationDecorator.Second, () => LearningOfOption.GetValue() == 0 || LearningOfOption.GetValue() == 2);
     static private readonly IntegerConfiguration LearningNeedRoundOption = NebulaAPI.Configurations.Configuration("options.role.trainee.needRound", (1, 8, 1), 1, () => LearningOfOption.GetValue() == 1 || LearningOfOption.GetValue() == 2);
     public static readonly SimpleRoleFilterConfiguration RoleFilterOption = new SimpleRoleFilterConfiguration("options.role.trainee.abilityFilter")
     {
@@ -26,13 +26,14 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
     static public Trainee MyRole = new Trainee();
     bool IAssignableDocument.HasTips => true;
     [NebulaRPCHolder]
-    public class Instance : RuntimeAssignableTemplate, RuntimeRole, RuntimeAssignable
+    public class Instance : RuntimeAssignableTemplate, RuntimeRole, RuntimeAssignable, IGameOperator
     {
         DefinedRole RuntimeRole.Role => MyRole;
         static internal Virial.Media.Image? buttonImage = NebulaAPI.AddonAsset.GetResource("TraineeSkill.png")?.AsImage(115f);
         ModAbilityButton? learnButton;
         public byte managerId;
         public bool canDecorateName = false;
+        public bool becomeAideRole = false;
         [Local]
         void DecorateName(PlayerDecorateNameEvent ev)
         {
@@ -69,6 +70,12 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
             }
         }
         
+        void IGameOperator.OnReleased()
+        {
+            ExtendedRoleInstance?.Inactivate();
+            ExtendedRoleInstance = null;
+        }
+
         bool RuntimeRole.CheckGuessAbility(DefinedRole abilityRole)
         {
             return MyExtendedRole == null ? abilityRole == MyRole : abilityRole == MyExtendedRole;
@@ -131,6 +138,19 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
                         DefinedRole? learnedRole = null;
                         
                         var targrtRoleCategory = player.Role.Role.Category;
+                        new StaticAchievementToken("trainee.common1");
+                        if (targrtRoleCategory == RoleCategory.ImpostorRole)
+                        {
+                            new StaticAchievementToken("trainee.common2");
+                        }
+                        if (targrtRoleCategory == RoleCategory.NeutralRole)
+                        {
+                            new StaticAchievementToken("trainee.common3");
+                        }
+                        if (targrtRoleCategory == RoleCategory.CrewmateRole)
+                        {
+                            new StaticAchievementToken("trainee.common4");
+                        }
                         if (MyPlayer.IsTrueCrewmate && targrtRoleCategory == RoleCategory.CrewmateRole &&
                             !player.IsMadmate && player.Role.Role != Insomniacs.MyRole && player.Role.Role != MyRole)
                         {
@@ -168,6 +188,7 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
                             else
                             {
                                 MyPlayer.SetRole(Aide.MyRole);
+                                becomeAideRole = true;
                             }
                         }
                     };
@@ -200,6 +221,77 @@ public class Trainee : DefinedRoleTemplate, DefinedRole, DefinedAssignable, IAss
             catch (Exception e)
             {
                 PDebug.Log(e);
+            }
+        }
+        [NebulaRPC]
+        void ManagerAchievement(GamePlayer manager)
+        {
+            if (manager.AmOwner && manager != null && manager.Role.Role.Category == RoleCategory.CrewmateRole && !manager.IsMadmate)
+            {
+                new StaticAchievementToken("manager.common1");
+            }
+        }
+        void OnPlayerKillPlayer(PlayerKillPlayerEvent ev)
+        {
+            var manager = GamePlayer.GetPlayer(managerId);
+            if (ev.Murderer == manager && (ev.Murderer.Role.Role.Category != RoleCategory.CrewmateRole || ev.Murderer.IsMadmate) && ev.Dead == MyPlayer)
+            {
+                if (MyPlayer.AmOwner)
+                {
+                    new StaticAchievementToken("trainee.common5");
+                }
+            }
+            if (ev.Murderer == MyPlayer && ev.Dead == manager && manager.Role.Role.Category == RoleCategory.ImpostorRole)
+            {
+                if (MyPlayer.AmOwner)
+                {
+                    new StaticAchievementToken("trainee.challenge1");
+                }
+                if (manager.AmOwner)
+                {
+                    new StaticAchievementToken("manager.challenge3");
+                }
+            }
+        }
+        void OnExile(PlayerExiledEvent ev)
+        {
+            var manager = GamePlayer.GetPlayer(managerId);
+            var voters = MeetingHudExtension.GetLastSwappedVotedFor()
+                .Where(entry => entry.voteTo == managerId)
+                    .Select(entry => NebulaGameManager.Instance!.GetPlayer(entry.voter))
+                        .Where(p => p != null && !p.IsDead).ToArray();
+            if (ev.Player == manager && manager.Role.Role.Category == RoleCategory.ImpostorRole && voters.Contains(MyPlayer))
+            {
+                if (MyPlayer.AmOwner)
+                {
+                    new StaticAchievementToken("trainee.challenge1");
+                }
+                if (manager.AmOwner)
+                {
+                    new StaticAchievementToken("manager.challenge3");
+                }
+            }
+        }
+        [Local]
+        void OnGameEnd(GameEndEvent ev)
+        {
+            bool won = ev.CheckWin(MyPlayer);
+            var manager = GamePlayer.GetPlayer(managerId);
+            bool managerwon = false;
+            bool managerIsAlive = false;
+            bool crewWinEnd = ev.EndState.EndCondition == NebulaGameEnds.CrewmateGameEnd.Get();
+            if (manager != null)
+            {
+                managerwon = ev.CheckWin(manager);
+                managerIsAlive = manager.IsAlive;
+                if (won && managerwon && crewWinEnd && MyPlayer.IsAlive && managerIsAlive && MyExtendedRole == manager.Role.Role)
+                {
+                    new StaticAchievementToken("trainee.challenge2");
+                }
+            }
+            if (won && becomeAideRole && crewWinEnd)
+            {
+                new StaticAchievementToken("trainee.challenge3");
             }
         }
     }
@@ -236,6 +328,7 @@ public class Manager : DefinedModifierTemplate, DefinedModifier, DefinedAssignab
         void OnDecoratePlayerName(PlayerDecorateNameEvent ev)
         {
             if (aide == null||ev.Player == null) return;
+            if (aide.Role is not Trainee.Instance) return;
             if (MyPlayer.AmOwner)
             {
                 if(ev.Player.PlayerId == MyPlayer.PlayerId || ev.Player.PlayerId == aide.PlayerId)
@@ -265,7 +358,63 @@ public class Manager : DefinedModifierTemplate, DefinedModifier, DefinedAssignab
         {
             if (AmOwner || canSeeAllInfo || inEndScene) name += "◇".Color(MyRole.RoleColor);
         }
-
+        [Local]
+        void OnPlayerKillPlayer(PlayerKillPlayerEvent ev)
+        {
+            if (ev.Murderer == MyPlayer && ev.Murderer.Role.Role.Category == RoleCategory.CrewmateRole && !ev.Murderer.IsMadmate && ev.Dead == aide && (ev.Dead.Role.Role.Category != RoleCategory.CrewmateRole || ev.Dead.IsMadmate))
+            {
+                new StaticAchievementToken("manager.challenge1");
+            }
+            if (ev.Murderer == aide && ev.Dead == MyPlayer && (ev.Dead.Role.Role.Category != RoleCategory.CrewmateRole || ev.Dead.IsMadmate))
+            {
+                new StaticAchievementToken("manager.challenge3");
+            }
+        }
+        [Local]
+        void OnExile(PlayerExiledEvent ev)
+        {
+            if (aide != null)
+            {
+                var voters = MeetingHudExtension.GetLastSwappedVotedFor()
+                     .Where(entry => entry.voteTo == aide.PlayerId)
+                         .Select(entry => NebulaGameManager.Instance!.GetPlayer(entry.voter))
+                                .Where(p => p != null && !p.IsDead).ToArray();
+                if (ev.Player == aide && (aide.Role.Role.Category != RoleCategory.CrewmateRole || aide.IsMadmate) && voters.Contains(MyPlayer))
+                {
+                    new StaticAchievementToken("manager.challenge1");
+                }
+            }
+        }
+        void OnGameEnd(GameEndEvent ev)
+        {
+            bool managerwon = ev.CheckWin(MyPlayer);
+            bool crewWinEnd = ev.EndState.EndCondition == NebulaGameEnds.CrewmateGameEnd.Get();
+            if (aide != null)
+            {
+                bool aidewon = ev.CheckWin(aide);
+                if (managerwon && aidewon && !crewWinEnd&&aide.IsSameSideOf(MyPlayer))
+                {
+                    if (aide.AmOwner)
+                    {
+                        new StaticAchievementToken("trainee.challenge4");
+                    }
+                }
+                if (managerwon && aidewon && crewWinEnd && aide.IsDead)
+                {
+                    if (MyPlayer.AmOwner)
+                    {
+                        new StaticAchievementToken("manager.common2");
+                    }
+                }
+                if (managerwon && aidewon && !crewWinEnd && MyPlayer.IsSameSideOf(aide))
+                {
+                    if (MyPlayer.AmOwner)
+                    {
+                        new StaticAchievementToken("manager.challenge2");
+                    }
+                }
+            }
+        }
     }
 }
 

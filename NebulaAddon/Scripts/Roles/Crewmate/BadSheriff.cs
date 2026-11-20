@@ -4,7 +4,7 @@ namespace Plana.Roles.Crewmate;
 [NebulaRPCHolder]
 public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, HasCitation, DefinedRole, IAssignableDocument
 {
-    private BadSheriff() : base("badsheriff", Virial.Color.ImpostorColor, RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [KillCoolDownOption, NumOfShotsOption, CanKillHidingPlayerOption, SealAbilityUntilReportingDeadBodiesOption, UnsealOnReportButtonTurningOnOption,ShareKillPlayerRoleToAllPlayer,ShareKillPlayerRoleToNonCrewmatePlayer])
+    private BadSheriff() : base("badsheriff", Virial.Color.ImpostorColor, RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [KillCoolDownOption, NumOfShotsOption, CanKillHidingPlayerOption, SealAbilityUntilReportingDeadBodiesOption, UnsealOnReportButtonTurningOnOption,ShareKillPlayerRoleToPlayer])
     {
         //ConfigurationHolder?.AddTags(ConfigurationTags.TagBeginner);
         //ConfigurationHolder!.Illustration = new NebulaSpriteLoader("Assets/NebulaAssets/Sprites/Configurations/Sheriff.png");
@@ -35,8 +35,7 @@ public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, 
     static internal readonly BoolConfiguration CanKillHidingPlayerOption = NebulaAPI.Configurations.Configuration("options.role.badsheriff.canKillHidingPlayer", false);
     static internal readonly BoolConfiguration SealAbilityUntilReportingDeadBodiesOption = NebulaAPI.Configurations.Configuration("options.role.badsheriff.sealAbilityUntilReportingDeadBodies", false);
     static internal readonly BoolConfiguration UnsealOnReportButtonTurningOnOption = NebulaAPI.Configurations.Configuration("options.role.badsheriff.unsealOnReportButtonTurningOn", false, () => SealAbilityUntilReportingDeadBodiesOption);
-    static internal readonly BoolConfiguration ShareKillPlayerRoleToAllPlayer = NebulaAPI.Configurations.Configuration("options.role.badsheriff.shareKillPlayerRoleToAllPlayer", false);
-    static internal readonly BoolConfiguration ShareKillPlayerRoleToNonCrewmatePlayer = NebulaAPI.Configurations.Configuration("options.role.badsheriff.shareKillPlayerRoleToNonCrewmatePlayer", true,()=>!ShareKillPlayerRoleToAllPlayer);
+    static private readonly ValueConfiguration<int> ShareKillPlayerRoleToPlayer = NebulaAPI.Configurations.Configuration("options.role.badsheriff.shareKilledRole", ["options.role.badsheriff.shareKilledRole.toAll", "options.role.badsheriff.shareKilledRole.toNonCrewmate"], 1);
     bool DefinedRole.IsMadmate => true;
     static public readonly BadSheriff MyRole = new();
     public static RemoteProcess<(GamePlayer, int)> UpdateBadSheriffArgumentsRpc = new("UpdateBadSheriffArgumentRpc", (m, _) =>
@@ -170,7 +169,7 @@ public class BadSheriff : DefinedSingleAbilityRoleTemplate<BadSheriff.Ability>, 
             {
                 killplayers.Add(ev.Dead!.PlayerId);
             }
-            if (ShareKillPlayerRoleToAllPlayer || (ShareKillPlayerRoleToNonCrewmatePlayer && (GamePlayer.LocalPlayer.Role.Role.Category != RoleCategory.CrewmateRole||GamePlayer.LocalPlayer.IsMadmate)))
+            if (ShareKillPlayerRoleToPlayer.GetValue()==0 || (ShareKillPlayerRoleToPlayer.GetValue()==1 && (GamePlayer.LocalPlayer.Role.Role.Category != RoleCategory.CrewmateRole||GamePlayer.LocalPlayer.IsMadmate)))
             {
                 HideAndSeekDeathPopup hideAndSeekDeathPopup = UnityEngine.Object.Instantiate<HideAndSeekDeathPopup>(GameManagerCreator.Instance.HideAndSeekManagerPrefab.DeathPopupPrefab, DestroyableSingleton<HudManager>.Instance.transform.parent);
                 hideAndSeekDeathPopup.nameplate.gameObject.SetActive(false);
