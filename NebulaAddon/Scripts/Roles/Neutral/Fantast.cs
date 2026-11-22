@@ -1,4 +1,4 @@
-using Nebula.Game.Statistics;
+﻿using Nebula.Game.Statistics;
 using Nebula.Roles.Complex;
 using Nebula.Roles.Modifier;
 using Nebula.VoiceChat;
@@ -256,7 +256,7 @@ public class Fantast : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     },
                     _ => LeftCreateFancy >0 && !MyPlayer.IsDived,_=>createFancynum<MaxCreateFancyNumOption);
                 FancyButton.ShowUsesIcon(3, LeftCreateFancy.ToString());
-                var killButton = NebulaAPI.Modules.InteractButtonInner(this, MyPlayer, myKillTracker, new(false, true, true), true, true, false, Virial.Compat.VirtualKeyInput.Kill, null,
+                var killButton = NebulaAPI.Modules.KillButton(this, MyPlayer, new(false, true, true), true, Virial.Compat.VirtualKeyInput.Kill, null,
                     KillCoolDownOption.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (player, button) =>
                     {
@@ -266,7 +266,7 @@ public class Fantast : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
                         }
                         if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
-                    }, (_) => !MyPlayer.IsDived, (_) => MyPlayer.AllowToShowKillButtonByAbilities,null
+                    }, p => ObjectTrackers.PlayerlikeLocalKillablePredicate(p) && !IsMyFancy(p.RealPlayer), (_) => !MyPlayer.IsDived, (_) => MyPlayer.AllowToShowKillButtonByAbilities
                     );
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(killButton.GetKillButtonLike());
                 GameOperatorManager.Instance?.Subscribe<PlayerMurderedEvent>(ev =>
@@ -545,7 +545,7 @@ public class Fancy : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
             {
                 AmongUsUtil.PlayCustomFlash(Fantast.MyRole.RoleColor, 0f, 0.25f, 0.45f);
                 var myTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, ObjectTrackers.PlayerlikeLocalKillablePredicate, Fantast.MyRole.UnityColor,Nebula.Roles.Impostor.Impostor.CanKillHidingPlayerOption);
-                var killButton = NebulaAPI.Modules.InteractButtonInner(this, MyPlayer, myTracker, new(false, true, true), true, true, false, Virial.Compat.VirtualKeyInput.Kill, null,
+                var killButton = NebulaAPI.Modules.KillButton(this, MyPlayer, new(false, true, true), true, Virial.Compat.VirtualKeyInput.Kill, null,
                     KillCoolDownOption.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (player, button) =>
                     {
@@ -555,7 +555,7 @@ public class Fancy : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
                         }
                         if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
-                    }, _ => !MyPlayer.IsDived, _ => MyPlayer.AllowToShowKillButtonByAbilities, null
+                    }, p => ObjectTrackers.PlayerlikeLocalKillablePredicate(p), _ => !MyPlayer.IsDived, _ => MyPlayer.AllowToShowKillButtonByAbilities
                     );
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(killButton.GetKillButtonLike());
                 if (Fantast.TeamGuesserOption&&MyPlayer.Modifiers.Any(m=>m is GuesserModifier.Instance))

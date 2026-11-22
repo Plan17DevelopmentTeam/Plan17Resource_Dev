@@ -212,8 +212,6 @@ public class GameMaster : DefinedRoleTemplate, DefinedRole, HasCitation ,IAssign
             circleButton.Availability = (button) => true;
             circleButton.Visibility = (button) => true;
             circleButton.OnClick = (button) => OpenCircleWindow();
-
-            if (DebugTools.DebugMode) new DebugAbility().Register(this);
         }
 
         static EffectCircle circle = null!;
