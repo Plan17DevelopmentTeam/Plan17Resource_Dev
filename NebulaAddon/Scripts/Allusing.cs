@@ -1,6 +1,7 @@
 #pragma warning disable CS8019, CS8933
 global using GamePlayer = Virial.Game.Player;
 global using Task = System.Threading.Tasks.Task;
+global using GuesserSystem = Plana.Core.GuesserSystem;
 global using ManagedBass;
 global using System;
 global using System.Collections.Generic;

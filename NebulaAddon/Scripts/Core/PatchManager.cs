@@ -1,4 +1,4 @@
-global using Plana.Core;
+﻿global using Plana.Core;
 global using Plana.Core.API;
 using Amongus.GameModes.HideAndSeek;
 using AmongUs.Data;
@@ -3377,21 +3377,6 @@ public class PatchManager
                     });
                 }
 
-                if (ModSingleton<NoSVCRoom>.Instance != null)
-                {
-                    AddBottomButton("vcSettings", () => NoSVCRoom.VCSettings.OpenSettingScreen(__instance, null, false));
-                    AddBottomButton("vcRejoin", () => ModSingleton<NoSVCRoom>.Instance?.Rejoin());
-                }
-                if (!AmongUsLLImpl.AmongUsClientInstance || AmongUsLLImpl.AmongUsClientInstance.GameState == InnerNetClient.GameStates.NotJoined)
-                {
-                    AddBottomButton("vcServerSettings", () => NoSVCRoom.VCSettings.OpenServerSettingScreen(__instance));
-                }
-                /*if (NebulaGameManager.Instance?.VoiceChatManager != null)
-                {
-                    AddBottomButton("vcSettings", () => NebulaGameManager.Instance?.VoiceChatManager?.OpenSettingScreen(__instance));
-                    AddBottomButton("vcRejoin", () => NebulaGameManager.Instance?.VoiceChatManager?.Rejoin());
-                }*/
-
                 if (!AmongUsLLImpl.AmongUsClientInstance || AmongUsLLImpl.AmongUsClientInstance.GameState != InnerNet.InnerNetClient.GameStates.Started)
                 {
                     AddBottomButton("keyBindings", () =>
@@ -5354,7 +5339,9 @@ public class PatchManager
 
     static List<SponserInfo> GetSponsersInfo(int lvl)
     {
-        return lvl == 1 ? sponserInfoList.sponser : lvl == 2 ? sponserInfoList.contributor : lvl == 3 ? sponserInfoList.admin : sponserInfoList.developer;
+        if (sponserInfoList == null) return [];
+        var list = lvl == 1 ? sponserInfoList.sponser : lvl == 2 ? sponserInfoList.contributor : lvl == 3 ? sponserInfoList.admin : sponserInfoList.developer;
+        return list ?? [];
     }
 
     static bool IsDev(string code, bool blockHost = false)
@@ -5385,9 +5372,11 @@ public class PatchManager
         var list = GetSponsersInfo(2);
         return list.Any(c => code == c.Friendcode);
     }
-    static bool IsDev(PlayerControl player, bool blockHost = false)
+    static bool IsDev(PlayerControl? player, bool blockHost = false)
     {
-        var code = GetClient(player).FriendCode;
+        if (player == null) return false;
+        var code = GetClient(player)?.FriendCode;
+        if (code == null) return false;
         var list = GetSponsersInfo(4);
         if (blockHost && list.Any(i => i.name == "KC" && i.Friendcode == code))
         {
@@ -5395,9 +5384,11 @@ public class PatchManager
         }
         return list.Any(c => code == c.Friendcode);
     }
-    static bool IsAdmin(PlayerControl player)
+    static bool IsAdmin(PlayerControl? player)
     {
-        var code = GetClient(player).FriendCode;
+        if (player == null) return false;
+        var code = GetClient(player)?.FriendCode;
+        if (code == null) return false;
         if (IsDev(player, false))
         {
             return true;
@@ -5405,23 +5396,27 @@ public class PatchManager
         var list = GetSponsersInfo(3);
         return list.Any(c => code == c.Friendcode);
     }
-    static bool IsContributor(PlayerControl player)
+    static bool IsContributor(PlayerControl? player)
     {
+        if (player == null) return false;
         if (IsAdmin(player))
         {
             return true;
         }
-        var code = GetClient(player).FriendCode;
+        var code = GetClient(player)?.FriendCode;
+        if (code == null) return false;
         var list = GetSponsersInfo(2);
         return list.Any(c => code == c.Friendcode);
     }
-    static bool IsSponser(PlayerControl player)
+    static bool IsSponser(PlayerControl? player)
     {
+        if (player == null) return false;
         if (IsContributor(player))
         {
             return true;
         }
-        var code = GetClient(player).FriendCode;
+        var code = GetClient(player)?.FriendCode;
+        if (code == null) return false;
         var list = GetSponsersInfo(1);
         return list.Any(c => code == c.Friendcode);
     }
