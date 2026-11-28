@@ -1,4 +1,4 @@
-﻿using Nebula.Game.Statistics;
+using Nebula.Game.Statistics;
 using Nebula.Roles.Complex;
 using Nebula.Roles.Modifier;
 using Nebula.VoiceChat;
@@ -240,7 +240,6 @@ public class Fantast : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             {
                 createFancynum = 0;
                 leftCreateFancyNum = InitialCreateFancyNumOption;
-                var myKillTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, (p) => ObjectTrackers.PlayerlikeLocalKillablePredicate(p) && !IsMyFancy(p.RealPlayer), MyRole.UnityColor, Nebula.Roles.Impostor.Impostor.CanKillHidingPlayerOption);
                 var myFancyTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, (p) => ObjectTrackers.PlayerlikeStandardPredicate(p) && !IsMyFancy(p.RealPlayer), MyRole.UnityColor, false);
                 ModAbilityButton? FancyButton = null;
                 FancyButton = NebulaAPI.Modules.InteractButton(this, MyPlayer, myFancyTracker, new PlayerInteractParameter(RealPlayerOnly: true), false, true, Virial.Compat.VirtualKeyInput.SidekickAction, null,
@@ -266,7 +265,7 @@ public class Fantast : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                             MyPlayer.MurderPlayer(player, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
                         }
                         if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
-                    }, p => ObjectTrackers.PlayerlikeLocalKillablePredicate(p) && !IsMyFancy(p.RealPlayer), (_) => !MyPlayer.IsDived, (_) => MyPlayer.AllowToShowKillButtonByAbilities
+                    }, p => ObjectTrackers.PlayerlikeLocalKillablePredicate(p), (_) => !MyPlayer.IsDived, (_) => MyPlayer.AllowToShowKillButtonByAbilities
                     );
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(killButton.GetKillButtonLike());
                 GameOperatorManager.Instance?.Subscribe<PlayerMurderedEvent>(ev =>
@@ -544,7 +543,6 @@ public class Fancy : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableD
             if (AmOwner)
             {
                 AmongUsUtil.PlayCustomFlash(Fantast.MyRole.RoleColor, 0f, 0.25f, 0.45f);
-                var myTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, ObjectTrackers.PlayerlikeLocalKillablePredicate, Fantast.MyRole.UnityColor,Nebula.Roles.Impostor.Impostor.CanKillHidingPlayerOption);
                 var killButton = NebulaAPI.Modules.KillButton(this, MyPlayer, new(false, true, true), true, Virial.Compat.VirtualKeyInput.Kill, null,
                     KillCoolDownOption.Cooldown, "kill", ModAbilityButton.LabelType.Impostor, null!,
                     (player, button) =>

@@ -1,4 +1,4 @@
-﻿global using Plana.Core;
+global using Plana.Core;
 global using Plana.Core.API;
 using Amongus.GameModes.HideAndSeek;
 using AmongUs.Data;
