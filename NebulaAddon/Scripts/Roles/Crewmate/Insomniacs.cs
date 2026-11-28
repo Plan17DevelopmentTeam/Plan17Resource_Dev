@@ -57,10 +57,10 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
         {
             if (ev.Murderer.IsImpostor)
             {
-                new StaticAchievementToken("insomniacs.another5");
+                new StaticAchievementToken("insomniacs.another4");
                 if (ev.Murderer.Role is Dreamweaver.Instance)
                 {
-                    new StaticAchievementToken("insomniacs.another4");
+                    new StaticAchievementToken("insomniacs.another3");
                 }
             }
         }
@@ -123,10 +123,10 @@ public class Insomniacs : DefinedRoleTemplate, HasCitation, DefinedRole, Defined
                         switch (role.Role.Category)
                         {
                             case RoleCategory.CrewmateRole:
-                                new StaticAchievementToken("insomniacs.another3");
+                                new StaticAchievementToken("insomniacs.another2");
                                 break;
                             case RoleCategory.ImpostorRole:
-                                new StaticAchievementToken("insomniacs.another2");
+                                new StaticAchievementToken("insomniacs.another6");
                                 break;
                             case RoleCategory.NeutralRole:
                                 new StaticAchievementToken("insomniacs.another1");
@@ -257,7 +257,7 @@ public class InsomniacsModifier : DefinedModifierTemplate, DefinedModifier, Defi
                 AmongUsUtil.PlayCustomFlash(MyRole.RoleColor, 0f, 0.8f, 0.7f, 0f);
                 if (!meetingstart)
                 {
-                    new StaticAchievementToken("insomniacs.another6");
+                    new StaticAchievementToken("insomniacs.another5");
                 }
             }
         }
