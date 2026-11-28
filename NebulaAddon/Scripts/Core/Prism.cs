@@ -22,6 +22,7 @@ public class Prism : NebulaSyncStandardObject
     }
     public static Prism Place(Vector2 pos, int linkId, bool ghost) => (Prism)NebulaSyncObject.LocalInstantiate(MyTag, [pos.x, pos.y, linkId, ghost ? 1f : 0f]).SyncObject!;
     public static Prism PlaceGlobal(Vector2 pos, int linkId) => (Prism)NebulaSyncObject.RpcInstantiate(MyTag, [pos.x, pos.y, linkId, 0f]).SyncObject!;
+    public static Prism PlaceLocal(Vector2 pos, int linkId) => (Prism)NebulaSyncObject.LocalInstantiate(MyTag, [pos.x, pos.y, linkId, 0f]).SyncObject!;
 
     public void ScheduleGlobal(int linkId, Vector2 pos)
     {

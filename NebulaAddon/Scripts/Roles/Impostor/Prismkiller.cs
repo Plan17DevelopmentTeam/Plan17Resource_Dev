@@ -215,8 +215,20 @@ public class Prismkiller : DefinedSingleAbilityRoleTemplate<Prismkiller.Ability>
             RemoveMirror();
             PrismSystem.DropLocalPrism(enemy.id);
             PrismSystem.RemovePrism(enemy.id);
-            Prism a = Prism.PlaceGlobal(enemyPos, 0);
-            Prism b = Prism.PlaceGlobal(pos, a.ObjectId);
+            Prism a;
+            Prism b;
+            if (VisibleNextRound)
+            {
+                a = Prism.PlaceLocal(enemyPos, 0);
+                b = Prism.PlaceLocal(pos, a.ObjectId);
+                a.ScheduleGlobal(0, enemyPos);
+                b.ScheduleGlobal(a.ObjectId, pos);
+            }
+            else
+            {
+                a = Prism.PlaceGlobal(enemyPos, 0);
+                b = Prism.PlaceGlobal(pos, a.ObjectId);
+            }
             mirrorIds.Add(a.ObjectId);
             mirrorIds.Add(b.ObjectId);
             mirrorA = enemyPos;
